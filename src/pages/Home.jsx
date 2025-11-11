@@ -5,7 +5,7 @@ export default function Home(){
   const [status, setStatus] = useState({ ok: false, message: "Cargando..." });
 
   useEffect(()=>{
-    api.get("/ping")
+    api.get("/health/")
       .then((res)=> setStatus({ ok: true, message: JSON.stringify(res.data) }))
       .catch((err)=> setStatus({ ok: false, message: err.message }));
   }, []);
