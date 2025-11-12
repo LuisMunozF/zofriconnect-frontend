@@ -1,8 +1,15 @@
 export default function Login() {
   return (
-    <div className="container py-3">
-      <h3>Login</h3>
-      <p>Pantalla de inicio de sesión.</p>
-    </div>
+    <form style={{ maxWidth: "400px", margin: "0 auto", padding: "20px", border: "1px solid #ccc", borderRadius: "5px",}}>
+      <div class="mb-3">
+        <label for="exampleInputEmail1" class="form-label">Correo Electronico</label>
+        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" />
+      </div>
+      <div class="mb-3">
+        <label for="exampleInputPassword1" class="form-label">Contraseña</label>
+        <input type="password" class="form-control" id="exampleInputPassword1" />
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
   );
 }
