@@ -9,7 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     api
-      .get("/health/")
+      .get("/api/health/")
       .then((res) => {
         if (res.data && res.data.status === "ok") {
           setStatus({
