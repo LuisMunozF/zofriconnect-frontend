@@ -9,7 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     api
-      .get("/api/health/")
+      .get("/health/")   // 👈 importante: sin slash inicial
       .then((res) => {
         if (res.data && res.data.status === "ok") {
           setStatus({
@@ -26,7 +26,10 @@ export default function Home() {
       .catch((err) =>
         setStatus({
           ok: false,
-          message: "Backend no disponible ❌ (" + String(err.message || err) + ")",
+          message:
+            "Backend no disponible ❌ (" +
+            String(err.message || err) +
+            ")",
         })
       );
   }, []);
@@ -45,5 +48,3 @@ export default function Home() {
     </div>
   );
 }
-
-
