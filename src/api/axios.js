@@ -1,7 +1,21 @@
 import axios from "axios";
 
+// 1) Si viene desde .env, usamos eso
+// 2) Si no, usamos Render por defecto
+const RAW_BASE =
+  import.meta.env.VITE_API_URL ||
+  "https://zofriconnect-backend.onrender.com";
+
+// quitamos "/" del final si lo hubiera
+const NORMALIZED_BASE = RAW_BASE.replace(/\/+$/, "");
+
+console.log("DEBUG BASE_URL =>", NORMALIZED_BASE + "/api");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api",
+  // Resultado final:
+  //  - si usas .env con local → http://127.0.0.1:8000/api
+  //  - si no, Render        → https://zofriconnect-backend.onrender.com/api
+  baseURL: NORMALIZED_BASE + "/api",
 });
 
 api.interceptors.request.use((config) => {
@@ -10,15 +24,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Si el backend devuelve 401, limpia token y manda a /login
 api.interceptors.response.use(
-  (r) => r,
-  (err) => {
-    if (err?.response?.status === 401) {
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
       localStorage.removeItem("token_access");
       window.location.href = "/login";
     }
-    return Promise.reject(err);
+    return Promise.reject(error);
   }
 );
 
