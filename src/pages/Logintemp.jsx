@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import api from "../api/axios";
 
 export default function Login() {
   const [correo, setCorreo] = useState("");
@@ -10,34 +12,43 @@ export default function Login() {
     setMensaje("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo, password }),
-        credentials: "include",
-      });
+      const response = await api.post("/login/", { correo, password });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         setMensaje("✅ Inicio de sesión exitoso");
-        localStorage.setItem("usuario", data.user);
+
+        // Aquí puedes guardar token o usuario si tu backend lo devuelve
+        // localStorage.setItem("token_access", response.data.access);
+        // localStorage.setItem("usuario", JSON.stringify(response.data.user));
 
         window.location.href = "/";
       } else {
-        setMensaje("❌ " + (data.error || "Error al iniciar sesión"));
+        setMensaje("❌ Error al iniciar sesión");
       }
     } catch (error) {
-      setMensaje("❌ Error de conexión con el servidor");
+      const detail =
+        error?.response?.data?.detail ||
+        error?.response?.data?.error ||
+        "Error al iniciar sesión";
+      setMensaje("❌ " + detail);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "90vh" }}>
-      <form onSubmit={handleSubmit} className="border p-3 rounded shadow-sm bg-light" style={{ maxWidth: "400px", width: "100%" }}>
+    <div
+      className="d-flex justify-content-center align-items-center"
+      style={{ minHeight: "90vh" }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="border p-3 rounded shadow-sm bg-light"
+        style={{ maxWidth: "400px", width: "100%" }}
+      >
         <h3 className="text-center mb-3 text-primary">Iniciar Sesión</h3>
 
-        {mensaje && <div className="alert alert-info text-center">{mensaje}</div>}
+        {mensaje && (
+          <div className="alert alert-info text-center">{mensaje}</div>
+        )}
 
         <div className="mb-3">
           <label className="form-label">Correo Electrónico</label>
@@ -61,11 +72,15 @@ export default function Login() {
           />
         </div>
 
-        <button type="submit" className="btn btn-primary w-100">Iniciar Sesión</button>
+        <button type="submit" className="btn btn-primary w-100">
+          Iniciar Sesión
+        </button>
 
         <p className="text-center mt-3 mb-0">
           ¿No tienes una cuenta?{" "}
-          <a href="/Registro" className="text-primary text-decoration-none">Regístrate aquí</a>
+          <Link to="/registro" className="text-primary text-decoration-none">
+            Regístrate aquí
+          </Link>
         </p>
       </form>
     </div>

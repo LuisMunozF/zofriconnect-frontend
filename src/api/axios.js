@@ -6,21 +6,23 @@ const RAW_BASE =
   import.meta.env.VITE_API_URL ||
   "https://zofriconnect-backend.onrender.com";
 
-// quitamos "/" del final si lo hubiera
+// Quitamos "/" del final si lo hubiera
 const NORMALIZED_BASE = RAW_BASE.replace(/\/+$/, "");
 
 console.log("DEBUG BASE_URL =>", NORMALIZED_BASE + "/api");
 
 const api = axios.create({
   // Resultado final:
-  //  - si usas .env con local → http://127.0.0.1:8000/api
-  //  - si no, Render        → https://zofriconnect-backend.onrender.com/api
+  //  - si usas .env local → http://127.0.0.1:8000/api
+  //  - si no, Render      → https://zofriconnect-backend.onrender.com/api
   baseURL: NORMALIZED_BASE + "/api",
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token_access");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -36,3 +38,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
