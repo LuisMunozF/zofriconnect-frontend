@@ -6,6 +6,7 @@ import Login from "./pages/Logintemp.jsx";
 import Empresa from "./pages/Empresa.jsx";
 import Mapa from "./pages/Mapa";
 import Registro from "./pages/Registro.jsx";
+import Conexion from "./pages/Conexion.jsx";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/Conexion" element={<Conexion />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Registro" element={<Registro />} />
