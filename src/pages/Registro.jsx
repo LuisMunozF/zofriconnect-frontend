@@ -24,7 +24,7 @@ export default function Registro() {
     }
 
     try {
-      const response = await fetch("https://zofriconnect.netlify.app/Registro", {
+      const response = await fetch("https://zofriconnect-backend.onrender.com/api/registro/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,4 +84,4 @@ export default function Registro() {
   );
 }
 
-//holacomoestas
+//hol
