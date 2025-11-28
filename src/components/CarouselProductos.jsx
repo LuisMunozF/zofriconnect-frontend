@@ -4,31 +4,31 @@ export default function ProductCarousel() {
   const productos = [
     {
       id: 1,
-      img: "https://jpt.cl/wp-content/uploads/2022/11/TomFord1.png",
+      img: "https://www.maicao.cl/dw/image/v2/BDPM_PRD/on/demandware.static/-/Sites-masterCatalog_Chile/default/dw5cd9a0fe/images/large/271684-colonia-classic-splash-cologne-250-ml.jpg?sw=1000&sh=1000",
       nombre: "Tom Ford Lost Cherry 50ML",
       precio: "$129.900"
     },
     {
       id: 2,
-      img: "https://jpt.cl/wp-content/uploads/2022/11/TomFord2.png",
+      img: "https://perfumerialamundial.cl/cdn/shop/files/20230716182536_271_1200x1200.jpg?v=1699041941",
       nombre: "Tom Ford Oud Wood 100ML",
       precio: "$279.900"
     },
     {
       id: 3,
-      img: "https://jpt.cl/wp-content/uploads/2022/11/TomFord3.png",
+      img: "https://r.bolder.run/3846/large/770176-CPCLPLS251.jpg",
       nombre: "Tom Ford Noir Extreme",
       precio: "$199.900"
     },
     {
       id: 4,
-      img: "https://jpt.cl/wp-content/uploads/2022/11/TomFord4.png",
+      img: "https://www.farmaciasahumada.cl/on/demandware.static/-/Sites-ahumada-master-catalog/default/dw19ed9be4/images/products/78518001/78518001.jpg",
       nombre: "Tom Ford Black Orchid",
       precio: "$159.900"
     },
     {
       id: 5,
-      img: "https://jpt.cl/wp-content/uploads/2022/11/TomFord4.png",
+      img: "https://petrizzio.cl/cdn/shop/products/perfume-mujer-moments-edp-100-ml-plaisance-227097.jpg?v=1706880546",
       nombre: "Tom Ford Black Orchid",
       precio: "$159.900"
     }
@@ -37,10 +37,8 @@ export default function ProductCarousel() {
   return (
     <div className="container py-5">
       <h2 className="text-center fw-bold mb-4">Nuevos Productos</h2>
-
       <div id="productCarousel" className="carousel slide" data-bs-ride="carousel">
         <div className="carousel-inner">
-
           {/* Primer slide */}
           <div className="carousel-item active">
             <div className="row justify-content-center">
@@ -58,7 +56,6 @@ export default function ProductCarousel() {
               ))}
             </div>
           </div>
-
           {/* Segundo slide */}
           <div className="carousel-item">
             <div className="row justify-content-center">
@@ -78,7 +75,6 @@ export default function ProductCarousel() {
           </div>
 
         </div>
-
         {/* Flechas */}
         <button className="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev" >
             <span className="carousel-control-prev-icon bg-primary"></span>
