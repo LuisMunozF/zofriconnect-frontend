@@ -3,49 +3,69 @@ import { Link } from "react-router-dom";
 export default function Navbar() {
   return (
     <>
-      {/* Barra superior azul */}
+      {/* Barra superior informativa */}
       <div className="bg-primary text-center text-white py-1 small">
-        Delivery Iquique y Alto Hospicio $2.500 en 24 a 72 hrs hábiles.
-        Delivery Arica $3.500 (según peso del producto) de 3 a 5 días hábiles.
+        ZofriConnect · Plataforma web para conectar empresas usuarias de ZOFRI con
+        compradores mayoristas mediante catálogo, mapa de empresas y cotización.
       </div>
 
       {/* NAVBAR PRINCIPAL */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 position-relative">
         <div className="container-fluid">
-
-          {/* Redes sociales */}
+          {/* Redes sociales (opcional) */}
           <div className="d-none d-lg-flex gap-3 me-3">
-            <a href="#" className="text-dark fs-5">
+            <a href="#" className="text-dark fs-5" aria-label="Facebook ZofriConnect">
               <i className="bi bi-facebook text-primary"></i>
             </a>
-            <a href="#" className="text-dark fs-5">
+            <a href="#" className="text-dark fs-5" aria-label="Instagram ZofriConnect">
               <i className="bi bi-instagram text-primary"></i>
             </a>
           </div>
 
-          {/* Selector de región */}
-          <div className="dropdown me-4 d-none d-lg-block">
-            <button className="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-              Seleccionar región
-            </button>
-            <ul className="dropdown-menu">
-              <li><a className="dropdown-item" href="#">Iquique</a></li>
-              <li><a className="dropdown-item" href="#">Alto Hospicio</a></li>
-              <li><a className="dropdown-item" href="#">Arica</a></li>
-            </ul>
+          {/* Etiqueta de zona */}
+          <div className="d-none d-lg-block me-4">
+            <span className="badge bg-outline-primary border border-primary text-primary">
+              Zona Franca de Iquique · ZOFRI
+            </span>
           </div>
 
           {/* Toggle responsive */}
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+          >
             <span className="navbar-toggler-icon"></span>
           </button>
 
           {/* Links izquierda */}
-          <div className="collapse navbar-collapse order-2 order-lg-1" id="navbarNav">
+          <div
+            className="collapse navbar-collapse order-2 order-lg-1"
+            id="navbarNav"
+          >
             <ul className="navbar-nav me-auto">
-              <li className="nav-item"><Link className="nav-link text-primary" to="/">Inicio</Link></li>
-              <li className="nav-item"><Link className="nav-link text-primary" to="/catalogo">Productos</Link></li>
-              <li className="nav-item"><Link className="nav-link text-primary" to="/mapa">Mapa</Link></li>
+              <li className="nav-item">
+                <Link className="nav-link text-primary" to="/">
+                  Inicio
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link text-primary" to="/catalogo">
+                  Catálogo mayorista
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link text-primary" to="/mapa">
+                  Mapa de empresas
+                </Link>
+              </li>
+              {/* Si tienes página de empresas, puedes ajustar la ruta */}
+              {/* <li className="nav-item">
+                <Link className="nav-link text-primary" to="/empresa">
+                  Empresas usuarias
+                </Link>
+              </li> */}
             </ul>
           </div>
 
@@ -60,89 +80,107 @@ export default function Navbar() {
 
           {/* Buscador derecha */}
           <form className="d-none d-lg-flex ms-auto order-1 order-lg-2 w-25">
-            <input className="form-control" type="search" placeholder="Buscar productos..." />
+            <input
+              className="form-control"
+              type="search"
+              placeholder="Buscar empresa o producto..."
+            />
           </form>
 
-          {/* Iconos */}
+          {/* Acceso empresas / registro */}
           <ul className="navbar-nav ms-3 order-3 align-items-center">
-            <li className="nav-item me-3">
-              <Link className="nav-link fs-5" to="/login">
-                <i className="bi bi-person-circle text-primary"></i>
+            <li className="nav-item me-2">
+              <Link className="btn btn-outline-primary btn-sm" to="/login">
+                Acceso empresas
               </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link fs-5 position-relative" to="/carrito">
-                <i className="bi bi-bag text-primary"></i>
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">0</span>
+              <Link className="btn btn-primary btn-sm" to="/registro">
+                Registrar empresa
               </Link>
             </li>
           </ul>
         </div>
       </nav>
 
-      {/* MENÚ DE CATEGORÍAS */}
+      {/* MENÚ DE CATEGORÍAS (adaptado a rubros ZOFRI) */}
       <div className="bg-white border-top shadow-sm">
         <div className="container-fluid">
           <ul className="nav justify-content-center py-2 fw-semibold">
-
-            {/* CATEGORÍA - NORMAL */}
             <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">PERFUMES</span>
+              <span
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Electrónica y Tecnología
+              </span>
               <ul className="dropdown-menu">
-                <li><a className="dropdown-item" href="#">Marca 1</a></li>
-                <li><a className="dropdown-item" href="#">Marca 2</a></li>
-                <li><a className="dropdown-item" href="#">Marca 3</a></li>
+                <li>
+                  <span className="dropdown-item">Telefonía y accesorios</span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Computación y redes</span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Electrohogar</span>
+                </li>
               </ul>
             </li>
 
-            {/* CATEGORÍA - PERFUMES ÁRABES */}
             <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">PERFUMES ÁRABES</span>
+              <span
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Automotriz y Repuestos
+              </span>
               <ul className="dropdown-menu">
-                <li><a className="dropdown-item">MARYAJ</a></li>
-                <li><a className="dropdown-item">KHADLAJ</a></li>
-                <li><a className="dropdown-item">ARD AL ZAAFARAN</a></li>
-                <li><a className="dropdown-item">AJMAL</a></li>
-                <li><a className="dropdown-item">ASDAAF</a></li>
-                <li><a className="dropdown-item">LATTAFA</a></li>
-                <li><a className="dropdown-item">LATTAFA RAVE</a></li>
-                <li><a className="dropdown-item">LATTAFA PRIDE</a></li>
-                <li><a className="dropdown-item">NICHE EMARATI</a></li>
+                <li>
+                  <span className="dropdown-item">Repuestos livianos</span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Repuestos pesados</span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Accesorios vehiculares</span>
+                </li>
               </ul>
             </li>
 
-            {/* Perfumes Nico */}
             <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">PERFUMES NICHO</span>
+              <span
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Hogar y Deco
+              </span>
               <ul className="dropdown-menu">
-                <li><a className="dropdown-item">Categoría 1</a></li>
-                <li><a className="dropdown-item">Categoría 2</a></li>
+                <li>
+                  <span className="dropdown-item">Muebles y decoración</span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Menaje y cocina</span>
+                </li>
               </ul>
             </li>
 
-            {/* EJEMPLO */}
             <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">COSMÉTICOS</span>
+              <span
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Textil y Calzado
+              </span>
               <ul className="dropdown-menu">
-                <li><a className="dropdown-item">Maquillaje</a></li>
-                <li><a className="dropdown-item">Cuidado facial</a></li>
+                <li>
+                  <span className="dropdown-item">
+                    Ropa y accesorios mayoristas
+                  </span>
+                </li>
+                <li>
+                  <span className="dropdown-item">Calzado</span>
+                </li>
               </ul>
-            </li>
-
-            {/* EJEMPLO */}
-            <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">COSMÉTICOS</span>
-              <ul className="dropdown-menu">
-                <li><a className="dropdown-item">Maquillaje</a></li>
-                <li><a className="dropdown-item">Cuidado facial</a></li>
-              </ul>
-            </li>
-            <li className="nav-item dropdown px-3">
-              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">COSMÉTICOS</span>
-              <ul className="dropdown-menu">
-                <li><a className="dropdown-item">Maquillaje</a></li>
-                <li><a className="dropdown-item">Cuidado facial</a></li>
-            </ul>
             </li>
           </ul>
         </div>

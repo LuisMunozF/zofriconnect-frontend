@@ -3,32 +3,33 @@ import React from 'react'
 const Footer = () => {
   return (
     <div>
-            {/*         FOOTER          */} 
+      {/* FOOTER ZOFRICONNECT */}
       <footer className="bg-primary text-white pt-5 pb-3 mt-5">
         <div className="container">
-          <h3 className="text-center fw-bold mb-4">Suscríbete a ZofriConnect</h3>
-          <p className="text-center mb-4">Te invitamos a recibir ofertas, descuentos y novedades exclusivas.</p>
 
-          {/* Formulario de Suscripción */}
-          <div className="row justify-content-center mb-5">
-            <div className="col-md-5 mb-3">
-              <label className="form-label">Correo electrónico *</label>
-              <input type="email" className="form-control" placeholder="tu@email.com" />
-            </div>
-            <div className="col-md-5 mb-3">
-              <label className="form-label">Fecha de nacimiento</label>
-              <input type="date" className="form-control" />
-            </div>
-            <div className="col-md-2 d-flex align-items-end mb-3">
-              <button className="btn btn- w-100">Suscribirse</button>
-            </div>
-          </div>
+          {/* TITULO */}
+          <h3 className="text-center fw-bold mb-4">ZofriConnect</h3>
+          <p className="text-center mb-5">
+            Plataforma digital para facilitar el acceso al catálogo mayorista, 
+            la geolocalización de empresas usuarias y el sistema de cotización dentro de ZOFRI.
+          </p>
 
           <div className="row text-center text-md-start">
+
+            {/* INFO PRINCIPAL */}
             <div className="col-md-4 mb-4">
-              <h4 className="fw-bold">ZofriConnect</h4>
-              <p>Mall Zofri, Iquique, Chile</p>
-              <p>contacto@zofriconnect.cl</p>
+              <h5 className="fw-bold">Sobre el proyecto</h5>
+              <p>
+                ZofriConnect es un prototipo académico orientado a modernizar la gestión comercial 
+                de las empresas usuarias del Recinto Amurallado ZOFRI, conectándolas con compradores mayoristas.
+              </p>
+
+              <p className="mb-1">
+                <strong>Ubicación:</strong> Zona Franca de Iquique, Chile
+              </p>
+              <p className="mb-3">
+                <strong>Correo:</strong> contacto@zofriconnect.cl
+              </p>
 
               {/* Redes */}
               <div className="d-flex gap-3 justify-content-center justify-content-md-start fs-4">
@@ -37,32 +38,64 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Servicio al cliente */}
+            {/* ENLACES A MÓDULOS */}
             <div className="col-md-4 mb-4">
-              <h5 className="fw-bold mb-3">Servicio al Cliente</h5>
+              <h5 className="fw-bold mb-3">Módulos principales</h5>
               <ul className="list-unstyled">
-                <li><a href="#" className="text-white text-decoration-none">Preguntas Frecuentes</a></li>
-                <li><a href="#" className="text-white text-decoration-none">Términos y Condiciones</a></li>
-                <li><a href="#" className="text-white text-decoration-none">Contáctanos</a></li>
-                <li><a href="#" className="text-white text-decoration-none">Nuestras Tiendas</a></li>
-                <li><a href="#" className="text-white text-decoration-none">Mi lista de deseos</a></li>
+                <li>
+                  <a href="/catalogo" className="text-white text-decoration-none">
+                    Catálogo mayorista
+                  </a>
+                </li>
+                <li>
+                  <a href="/mapa" className="text-white text-decoration-none">
+                    Mapa de empresas
+                  </a>
+                </li>
+                <li>
+                  <a href="/registro" className="text-white text-decoration-none">
+                    Registrar empresa
+                  </a>
+                </li>
+                <li>
+                  <a href="/login" className="text-white text-decoration-none">
+                    Acceso empresas
+                  </a>
+                </li>
               </ul>
             </div>
 
-            {/* Pagos seguros */}
-            <div className="col-md-4 ">
-              <h5 className="fw-bold">Pago 100% Seguro</h5>
-              <p>Protección SSL y pago seguro</p>
-              <img src="https://jpt.cl/wp-content/uploads/2022/02/logo_transbankwebpayplus-300x111.png" alt="Métodos de pago" style={{ maxWidth: "180px" }}/> <br />
-              <img src="https://jpt.cl/wp-content/uploads/2022/01/Transbank-logo-2.png" alt="Métodos de pago" style={{ maxWidth: "200px" }}/>
+            {/* ACERCA DE ZOFRI */}
+            <div className="col-md-4">
+              <h5 className="fw-bold mb-3">ZOFRI · Zona Franca de Iquique</h5>
+              <p>
+                El sistema está diseñado considerando las necesidades de visibilidad comercial, 
+                promoción de productos y ubicación estratégica de las empresas dentro del recinto amurallado.
+              </p>
+              <p className="small text-light">
+                Prototipo académico — no representa una plataforma oficial de ZOFRI S.A.
+              </p>
+
+              {/* ENLACE DISCRETO AL DIAGNÓSTICO DEL BACKEND */}
+              <p className="small mt-3">
+                <a 
+                  href="/conexion" 
+                  className="text-light text-decoration-none opacity-75"
+                >
+                  Estado del backend
+                </a>
+              </p>
             </div>
+
           </div>
 
           <hr className="border-secondary" />
-          {/* Copyright */}
+
+          {/* COPYRIGHT */}
           <p className="text-center mt-3 mb-0">
-            © 2025 ZofriConnect — Todos los derechos reservados.
+            © 2025 ZofriConnect — Prototipo académico para fines educativos.
           </p>
+
         </div>
       </footer>
     </div>
