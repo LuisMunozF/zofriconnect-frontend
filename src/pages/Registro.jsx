@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api/axios";  // Asegúrate de que api esté configurado con la URL base de tu backend
+import api from "../api/axios"; 
 
 export default function Registro() {
   const [formData, setFormData] = useState({
