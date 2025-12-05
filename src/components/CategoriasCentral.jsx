@@ -3,30 +3,47 @@ import React from 'react'
 const CategoriasCentral = () => {
   return (
     <div>
-        {/* Categorias Central */}
+      {/* Categorías centrales ZofriConnect */}
       <section className="container py-5 text-center">
+        <h2 className="fw-bold mb-4 text-primary">Explora por rubro mayorista</h2>
+        <p className="text-muted mb-5">
+          Ejemplos de categorías que las empresas usuarias de ZOFRI pueden publicar en el catálogo digital.
+        </p>
+
         <div className="row justify-content-center g-4">
-          {/* COLONIAS */}
+          {/* TECNOLOGÍA Y ELECTRÓNICA */}
           <div className="col-6 col-md-3">
             <div>
-              <img src="https://jpt.cl/wp-content/uploads/2022/11/Colonias.png" className="img-fluid" alt="Colonias" />
-              <h5 className="mt-3">COLONIAS</h5>
+              <img
+                src="https://via.placeholder.com/300x200?text=Tecnologia+y+Electronica"
+                className="img-fluid rounded"
+                alt="Tecnología y Electrónica"
+              />
+              <h5 className="mt-3">Tecnología y Electrónica</h5>
             </div>
           </div>
 
-          {/* HOGAR */}
+          {/* AUTOMOTRIZ Y REPUESTOS */}
           <div className="col-6 col-md-3">
             <div>
-              <img src="https://jpt.cl/wp-content/uploads/2022/11/Hogar.png" className="img-fluid" alt="Hogar" />
-              <h5 className="mt-3">HOGAR</h5>
+              <img
+                src="https://via.placeholder.com/300x200?text=Automotriz+y+Repuestos"
+                className="img-fluid rounded"
+                alt="Automotriz y Repuestos"
+              />
+              <h5 className="mt-3">Automotriz y Repuestos</h5>
             </div>
           </div>
 
-          {/* BAÑO Y CUERPO */}
+          {/* TEXTIL, HOGAR Y OTROS */}
           <div className="col-6 col-md-3">
             <div>
-              <img src="https://jpt.cl/wp-content/uploads/2022/11/BanoYCuerpo.png" className="img-fluid" alt="Baño y Cuerpo" />
-              <h5 className="mt-3">BAÑO Y CUERPO</h5>
+              <img
+                src="https://via.placeholder.com/300x200?text=Textil+Hogar+y+Otros"
+                className="img-fluid rounded"
+                alt="Textil, Hogar y Otros"
+              />
+              <h5 className="mt-3">Textil, Hogar y Otros</h5>
             </div>
           </div>
         </div>
