@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api/axios";
+import api from "../api/axios";  // Asegúrate de que api esté configurado con la URL base de tu backend
 
 export default function Registro() {
   const [formData, setFormData] = useState({
@@ -12,26 +12,35 @@ export default function Registro() {
 
   const [mensaje, setMensaje] = useState("");
 
+  // Maneja los cambios en el formulario
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    setFormData({
+      ...formData,
+      [id]: value,
+    });
   };
 
+  // Maneja el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensaje("");
+    setMensaje(""); // Limpiar mensaje anterior
 
+    // Verificar que las contraseñas coincidan
     if (formData.password !== formData.confirmarPassword) {
       setMensaje("⚠️ Las contraseñas no coinciden.");
       return;
     }
 
     try {
+      // Hacer la solicitud al backend para crear el usuario
       const response = await api.post("/registro/", {
         nombre: formData.nombre,
         correo: formData.correo,
         password: formData.password,
       });
 
+      // Verificar si la respuesta fue exitosa
       if (response.status === 201 || response.status === 200) {
         setMensaje("✅ Usuario registrado exitosamente.");
         setFormData({
@@ -44,6 +53,7 @@ export default function Registro() {
         setMensaje("❌ No se pudo registrar el usuario.");
       }
     } catch (error) {
+      console.error("Error en la solicitud", error);
       const detail =
         error?.response?.data?.detail ||
         error?.response?.data?.error ||

@@ -4,7 +4,7 @@ import axios from "axios";
 // 2) Si no, usamos Render por defecto
 const RAW_BASE =
   import.meta.env.VITE_API_URL ||
-  "https://zofriconnect-backend.onrender.com";
+  "http://127.0.0.1:8000";
 
 // Quitamos "/" del final si lo hubiera
 const NORMALIZED_BASE = RAW_BASE.replace(/\/+$/, "");
