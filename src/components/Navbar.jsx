@@ -1,6 +1,55 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../api/axios";
 
 export default function Navbar() {
+  const [usuario, setUsuario] = useState(null);
+
+  // Cargar usuario desde localStorage y validar con /soy/
+  useEffect(() => {
+    const storedUser = localStorage.getItem("usuario");
+    const token = localStorage.getItem("token_access");
+
+    if (!token) {
+      setUsuario(null);
+      return;
+    }
+
+    // Mostrar rápido lo que tengamos guardado
+    if (storedUser) {
+      try {
+        setUsuario(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Error al parsear usuario almacenado:", e);
+      }
+    }
+
+    // Validar contra el backend y traer datos frescos
+    api
+      .get("/soy/", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setUsuario(res.data);
+        localStorage.setItem("usuario", JSON.stringify(res.data));
+      })
+      .catch((err) => {
+        console.warn("Error al consultar /soy/:", err);
+        localStorage.removeItem("token_access");
+        localStorage.removeItem("token_refresh");
+        localStorage.removeItem("usuario");
+        setUsuario(null);
+      });
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token_access");
+    localStorage.removeItem("token_refresh");
+    localStorage.removeItem("usuario");
+    setUsuario(null);
+    window.location.href = "/";
+  };
+
   return (
     <>
       {/* Barra superior informativa */}
@@ -12,17 +61,18 @@ export default function Navbar() {
       {/* NAVBAR PRINCIPAL */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 position-relative">
         <div className="container-fluid">
-          {/* Redes sociales (opcional) */}
+          
+          {/* Redes sociales */}
           <div className="d-none d-lg-flex gap-3 me-3">
-            <a href="#" className="text-dark fs-5" aria-label="Facebook ZofriConnect">
+            <a href="#" className="text-dark fs-5">
               <i className="bi bi-facebook text-primary"></i>
             </a>
-            <a href="#" className="text-dark fs-5" aria-label="Instagram ZofriConnect">
+            <a href="#" className="text-dark fs-5">
               <i className="bi bi-instagram text-primary"></i>
             </a>
           </div>
 
-          {/* Etiqueta de zona */}
+          {/* Etiqueta zona */}
           <div className="d-none d-lg-block me-4">
             <span className="badge bg-outline-primary border border-primary text-primary">
               Zona Franca de Iquique · ZOFRI
@@ -60,12 +110,6 @@ export default function Navbar() {
                   Mapa de empresas
                 </Link>
               </li>
-              {/* Si tienes página de empresas, puedes ajustar la ruta */}
-              {/* <li className="nav-item">
-                <Link className="nav-link text-primary" to="/empresa">
-                  Empresas usuarias
-                </Link>
-              </li> */}
             </ul>
           </div>
 
@@ -78,32 +122,117 @@ export default function Navbar() {
             ZofriConnect
           </Link>
 
-          {/* Buscador derecha */}
-          <form className="d-none d-lg-flex ms-auto order-1 order-lg-2 w-25">
-            <input
-              className="form-control"
-              type="search"
-              placeholder="Buscar empresa o producto..."
-            />
-          </form>
+          {/* Buscador 
+<form className="d-none d-lg-flex ms-auto order-1 order-lg-2 w-25">
+  <input
+    className="form-control"
+    type="search"
+    placeholder="Buscar empresa o producto..."
+  />
+</form>
+*/}
 
-          {/* Acceso empresas / registro */}
+
+          {/* Zona derecha */}
           <ul className="navbar-nav ms-3 order-3 align-items-center">
-            <li className="nav-item me-2">
-              <Link className="btn btn-outline-primary btn-sm" to="/login">
-                Acceso empresas
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="btn btn-primary btn-sm" to="/registro">
-                Registrar empresa
-              </Link>
-            </li>
+            {usuario ? (
+              <>
+                {/* Información de sesión */}
+                <li className="nav-item d-none d-lg-block me-3">
+                  <span className="small text-muted">
+                    Sesión: <strong>{usuario.nombre || usuario.correo}</strong>{" "}
+                    {usuario.rol && (
+                      <span className="text-uppercase ms-1">
+                        ({usuario.rol})
+                      </span>
+                    )}
+                  </span>
+                </li>
+
+                {/* Botón Panel Admin (solo ADMIN) */}
+                {usuario.rol === "ADMIN" && (
+                  <li className="nav-item me-2">
+                    <Link className="btn btn-dark btn-sm" to="/admin">
+                      Panel Admin
+                    </Link>
+                  </li>
+                )}
+
+                {/* Botón Mi Empresa (solo EMPRESA) */}
+                {/* Botones de empresa (solo EMPRESA) */}
+                {usuario.rol === "EMPRESA" && (
+                  <>
+                    <li className="nav-item me-2">
+                      <Link
+                        className="btn btn-outline-primary btn-sm"
+                        to="/empresa"
+                      >
+                        Mi empresa
+                      </Link>
+                    </li>
+
+                    {/* NUEVO: cotizaciones recibidas */}
+                    <li className="nav-item me-2">
+                      <Link
+                        className="btn btn-outline-secondary btn-sm"
+                        to="/empresa/cotizaciones"
+                      >
+                        Cotizaciones recibidas
+                      </Link>
+                    </li>
+                  </>
+                )}
+
+                {/* Botón Mis Cotizaciones (solo CLIENTE) */}
+                {usuario.rol === "CLIENTE" && (
+                  <li className="nav-item me-2">
+                    <Link
+                      className="btn btn-outline-success btn-sm"
+                      to="/mis-cotizaciones"
+                    >
+                      Mis cotizaciones
+                    </Link>
+                  </li>
+                )}
+
+                {/* Cerrar sesión */}
+                <li className="nav-item">
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={handleLogout}
+                  >
+                    Cerrar sesión
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item me-2">
+                  <Link className="btn btn-outline-primary btn-sm" to="/login">
+                    Acceso empresas
+                  </Link>
+                </li>
+                <li className="nav-item me-2">
+                  <Link className="btn btn-primary btn-sm" to="/registro">
+                    Registrar empresa
+                  </Link>
+                </li>
+                {/* NUEVO: registro de clientes */}
+                <li className="nav-item">
+                  <Link
+                    className="btn btn-outline-success btn-sm"
+                    to="/registro-cliente"
+                  >
+                    Soy cliente
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </nav>
 
-      {/* MENÚ DE CATEGORÍAS (adaptado a rubros ZOFRI) */}
+      {/* MENÚ DE CATEGORÍAS */}
       <div className="bg-white border-top shadow-sm">
         <div className="container-fluid">
           <ul className="nav justify-content-center py-2 fw-semibold">
