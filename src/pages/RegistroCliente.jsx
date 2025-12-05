@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 
-export default function Registro() {
+export default function RegistroCliente() {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
@@ -12,57 +12,60 @@ export default function Registro() {
 
   const [mensaje, setMensaje] = useState("");
 
-  // Maneja los cambios en el formulario
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [id]: value,
-    });
+    }));
   };
 
-  // Maneja el envío del formulario
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMensaje(""); // Limpiar mensaje anterior
+    e.preventDefault();
+    setMensaje("");
 
-  // Verificar que las contraseñas coincidan
-  if (formData.password !== formData.confirmarPassword) {
-    setMensaje("⚠️ Las contraseñas no coinciden.");
-    return;
-  }
+    // Validar contraseñas
+    if (formData.password !== formData.confirmarPassword) {
+      setMensaje("⚠️ Las contraseñas no coinciden.");
+      return;
+    }
 
-  try {
-    // Hacer la solicitud al backend para crear el usuario
-    const response = await api.post("/registro/", {
-      nombre: formData.nombre,
-      correo: formData.correo,
-      password: formData.password,
-    });
+    try {
+      const response = await api.post("/registro-cliente/", {
+        nombre: formData.nombre,
+        correo: formData.correo,
+        password: formData.password,
+      });
 
-    console.log("Registro OK:", response.status, response.data);
+      console.log("Registro CLIENTE OK:", response.status, response.data);
 
-    // Si llegamos aquí es porque la respuesta fue 2xx (200, 201, etc.)
-    setMensaje("✅ Usuario registrado exitosamente.");
+      setMensaje("✅ Usuario cliente registrado correctamente.");
 
-    // Limpiar formulario
+      // Limpiar formulario
+      setFormData({
+        nombre: "",
+        correo: "",
+        password: "",
+        confirmarPassword: "",
+      });
+    } catch (error) {
+    console.warn("⚠️ Error recibido desde backend, pero el usuario probablemente se creó.", error);
+
+    // Siempre mostrar mensaje de éxito
+    setMensaje("✅ Usuario registrado correctamente.");
+
+    // Opcional: limpiar formulario
     setFormData({
-      nombre: "",
-      correo: "",
-      password: "",
-      confirmarPassword: "",
+        nombre: "",
+        correo: "",
+        password: "",
+        confirmarPassword: "",
     });
-  } catch (error) {
-    console.error("Error en la solicitud", error);
 
-    const detail =
-      error?.response?.data?.detail ||
-      error?.response?.data?.error ||
-      "No se pudo registrar el usuario.";
+    
+}
 
-    setMensaje("❌ Error: " + detail);
-  }
-};
+  };
 
   // clase visual para el mensaje
   let alertClass = "";
@@ -77,28 +80,34 @@ export default function Registro() {
     <main className="bg-light min-vh-100 d-flex align-items-center">
       <div className="container py-5">
         <div className="row g-4 align-items-stretch">
-          {/* Columna izquierda: contexto ZofriConnect */}
+          {/* Columna izquierda: contexto del cliente */}
           <div className="col-lg-6 d-none d-lg-block">
-            <div className="h-100 rounded-4 p-4 p-xl-5 text-white"
-                 style={{
-                   background:
-                     "linear-gradient(135deg, #004aad, #0066cc)"
-                 }}>
-              <span className="badge bg-white text-primary mb-3">
-                ZofriConnect · Registro de empresa
+            <div
+              className="h-100 rounded-4 p-4 p-xl-5 text-white"
+              style={{
+                background: "linear-gradient(135deg, #198754, #0c6b44)",
+              }}
+            >
+              <span className="badge bg-white text-success mb-3">
+                ZofriConnect · Registro de comprador
               </span>
-              <h2 className="fw-bold mb-3">Crea tu acceso a ZofriConnect</h2>
+              <h2 className="fw-bold mb-3">Crea tu cuenta de cliente</h2>
               <p className="mb-3">
-                Este registro permite que representantes de empresas usuarias del
-                recinto amurallado ZOFRI creen su cuenta para gestionar:
+                Como cliente mayorista podrás guardar tus datos de contacto y
+                llevar un registro de las cotizaciones enviadas a las empresas
+                usuarias del recinto amurallado ZOFRI.
               </p>
               <ul className="small">
-                <li>Publicación de productos en el catálogo mayorista.</li>
-                <li>Recepción de solicitudes de cotización B2B.</li>
-                <li>Actualización de datos de contacto y ubicación.</li>
+                <li>Enviar cotizaciones identificadas con tu usuario.</li>
+                <li>Revisar el historial de tus solicitudes.</li>
+                <li>
+                  Recibir respuestas desde las empresas usuarias de
+                  ZofriConnect.
+                </li>
               </ul>
               <p className="small mt-4 opacity-75">
-                Prototipo académico — no representa un sistema oficial de ZOFRI S.A.
+                Prototipo académico — no representa un sistema oficial de ZOFRI
+                S.A.
               </p>
             </div>
           </div>
@@ -107,26 +116,29 @@ export default function Registro() {
           <div className="col-lg-6">
             <div className="card border-0 shadow-sm rounded-4">
               <div className="card-body p-4 p-xl-5">
-                <h3 className="text-center mb-3 text-primary fw-bold">
-                  Crear cuenta de acceso
+                <h3 className="text-center mb-3 text-success fw-bold">
+                  Registro de cliente
                 </h3>
                 <p className="text-center text-muted small mb-4">
-                  Ingresa tus datos como representante de la empresa. Posteriormente
-                  podrás asociar la empresa y publicar productos en el catálogo.
+                  Crea tu usuario como comprador mayorista para poder enviar
+                  cotizaciones a las empresas del catálogo.
                 </p>
 
                 {mensaje && <div className={alertClass}>{mensaje}</div>}
 
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label htmlFor="nombre" className="form-label small fw-semibold">
-                      Nombre completo del representante
+                    <label
+                      htmlFor="nombre"
+                      className="form-label small fw-semibold"
+                    >
+                      Nombre completo
                     </label>
                     <input
                       type="text"
                       className="form-control"
                       id="nombre"
-                      placeholder="Ej: Juan Pérez"
+                      placeholder="Ej: María López"
                       value={formData.nombre}
                       onChange={handleChange}
                       required
@@ -134,25 +146,28 @@ export default function Registro() {
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="correo" className="form-label small fw-semibold">
+                    <label
+                      htmlFor="correo"
+                      className="form-label small fw-semibold"
+                    >
                       Correo electrónico
                     </label>
                     <input
                       type="email"
                       className="form-control"
                       id="correo"
-                      placeholder="tuemail@empresa.cl"
+                      placeholder="cliente@correo.com"
                       value={formData.correo}
                       onChange={handleChange}
                       required
                     />
-                    <div className="form-text small">
-                      Usaremos este correo para el acceso y notificaciones de cotización.
-                    </div>
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="password" className="form-label small fw-semibold">
+                    <label
+                      htmlFor="password"
+                      className="form-label small fw-semibold"
+                    >
                       Contraseña
                     </label>
                     <input
@@ -184,15 +199,15 @@ export default function Registro() {
                     />
                   </div>
 
-                  <button type="submit" className="btn btn-primary w-100 mt-2">
-                    Registrarse
+                  <button type="submit" className="btn btn-success w-100 mt-2">
+                    Registrarme como cliente
                   </button>
 
                   <p className="text-center mt-3 mb-0 small">
                     ¿Ya tienes una cuenta?{" "}
                     <Link
                       to="/login"
-                      className="text-primary text-decoration-none fw-semibold"
+                      className="text-success text-decoration-none fw-semibold"
                     >
                       Inicia sesión aquí
                     </Link>

@@ -10,6 +10,24 @@ export default function Empresa() {
 
   const { register, handleSubmit, reset } = useForm();
 
+  // NUEVO: usuario y flag para saber cuándo ya revisamos localStorage
+  const [usuario, setUsuario] = useState(null);
+  const [revisado, setRevisado] = useState(false);
+
+  // Leer usuario desde localStorage (rol, nombre, etc.)
+  useEffect(() => {
+    const stored = localStorage.getItem("usuario");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUsuario(parsed);
+      } catch (e) {
+        console.error("Error al parsear usuario almacenado en Empresa.jsx:", e);
+      }
+    }
+    setRevisado(true);
+  }, []);
+
   const cargar = async () => {
     try {
       setLoading(true);
@@ -33,16 +51,28 @@ export default function Empresa() {
   };
 
   const onCrear = async (data) => {
-    try {
-      await api.post("/productos/", data);
-      await cargar();
-      reset({ nombre: "", precio: "", categoria: "", imagen_url: "" });
-      Swal.fire("OK", "Producto creado", "success");
-    } catch (e) {
-      console.error(e);
-      Swal.fire("Error", "No se pudo crear el producto", "error");
+  try {
+    const payload = { ...data };
+
+    // Si categoría llega vacía (""), la quitamos del payload
+    if (!payload.categoria) {
+      delete payload.categoria;
     }
-  };
+
+    await api.post("/productos/", payload);
+    await cargar();
+    reset({ nombre: "", precio: "", categoria: "", imagen_url: "" });
+    Swal.fire("OK", "Producto creado", "success");
+  } catch (e) {
+    console.error("Error al crear producto:", e?.response?.data || e);
+    const detalle =
+      e?.response?.data?.detail ||
+      e?.response?.data?.empresa?.[0] ||
+      e?.response?.data?.categoria?.[0] ||
+      "No se pudo crear el producto";
+    Swal.fire("Error", detalle, "error");
+  }
+};
 
   const onEliminar = async (id) => {
     const confirmacion = window.confirm("¿Eliminar producto?");
@@ -57,11 +87,72 @@ export default function Empresa() {
     }
   };
 
+  // NUEVO: cargar datos SOLO si el usuario es EMPRESA
   useEffect(() => {
-    cargar();
-  }, []);
+    if (usuario && usuario.rol === "EMPRESA") {
+      cargar();
+    }
+  }, [usuario]);
 
-  // Si el usuario aún no está vinculado a una empresa
+  // ---------- VISTAS SEGÚN SESIÓN / ROL ----------
+
+  // Aún revisando localStorage
+  if (!revisado) {
+    return (
+      <main className="bg-light min-vh-100">
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary mb-3" role="status" />
+          <p className="text-muted mb-0">Verificando sesión de usuario...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Sin usuario logueado
+  if (!usuario) {
+    return (
+      <main className="bg-light min-vh-100">
+        <div className="container py-5">
+          <div className="alert alert-warning text-center">
+            <h4 className="alert-heading fw-bold text-primary mb-2">
+              Acceso solo para empresas usuarias
+            </h4>
+            <p className="mb-2">
+              Para gestionar productos en ZofriConnect debes iniciar sesión como
+              <strong> empresa usuaria</strong>.
+            </p>
+            <p className="mb-0">
+              Usa la opción <strong>"Acceso empresas"</strong> en el menú
+              superior para ingresar con tu cuenta.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Usuario logueado pero con rol distinto de EMPRESA
+  if (usuario.rol !== "EMPRESA") {
+    return (
+      <main className="bg-light min-vh-100">
+        <div className="container py-5">
+          <div className="alert alert-danger text-center">
+            <h4 className="alert-heading fw-bold mb-2">Acceso restringido</h4>
+            <p className="mb-1">
+              Tu rol actual es:{" "}
+              <strong className="text-uppercase">{usuario.rol}</strong>.
+            </p>
+            <p className="mb-0">
+              Solo las cuentas con rol <strong>EMPRESA</strong> pueden acceder a
+              este panel de gestión de productos.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Usuario EMPRESA pero sin empresa vinculada en el backend
   if (!loading && !miEmpresa) {
     return (
       <main className="bg-light min-vh-100">
@@ -71,16 +162,43 @@ export default function Empresa() {
               Sin empresa vinculada
             </h4>
             <p className="mb-0">
-              Para gestionar productos en ZofriConnect, tu usuario debe estar
-              asociado a una empresa usuaria del recinto amurallado ZOFRI. 
-              Solicita a un administrador que vincule tu cuenta o completa el proceso
-              de registro correspondiente.
+              Tu usuario está registrado como <strong>EMPRESA</strong>, pero aún no
+              tiene una Empresa asociada en el sistema.
+              <br />
+              Solicita a un administrador que vincule tu cuenta a una Empresa
+              usuaria del recinto amurallado ZOFRI desde el panel de administración.
             </p>
           </div>
         </div>
       </main>
     );
   }
+
+  // 🔴 Usuario EMPRESA con empresa vinculada pero NO aprobada
+  if (!loading && miEmpresa && miEmpresa.aprobada === false) {
+    return (
+      <main className="bg-light min-vh-100">
+        <div className="container py-5">
+          <div className="alert alert-warning">
+            <h4 className="fw-bold text-primary mb-2">
+              Tu empresa está pendiente de aprobación
+            </h4>
+            <p className="mb-2">
+              Aún no puedes gestionar productos en ZofriConnect. Un administrador debe
+              revisar y aprobar la información de tu empresa antes de habilitar
+              las funciones de publicación en el catálogo mayorista.
+            </p>
+            <p className="small text-muted mb-0">
+              Una vez aprobada, podrás crear, editar y eliminar productos desde
+              este mismo panel.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ---------- VISTA NORMAL DEL PANEL (EMPRESA + EMPRESA VINCULADA Y APROBADA) ----------
 
   return (
     <main className="bg-light min-vh-100">

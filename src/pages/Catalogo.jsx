@@ -5,6 +5,11 @@ export default function Catalogo() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState("");
 
+  // NUEVO: usuario logueado
+  const [usuario, setUsuario] = useState(null);
+  // NUEVO: empresa asociada al usuario (si es EMPRESA)
+  const [miEmpresa, setMiEmpresa] = useState(null);
+
   // Estado del formulario para crear un producto
   const [showForm, setShowForm] = useState(false);
   const [nombre, setNombre] = useState("");
@@ -15,6 +20,45 @@ export default function Catalogo() {
   const [categorias, setCategorias] = useState([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState("");
   const [selectedCategoria, setSelectedCategoria] = useState("");
+
+  // NUEVO: leer usuario desde localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("usuario");
+    if (stored) {
+      try {
+        setUsuario(JSON.parse(stored));
+      } catch (e) {
+        console.error("Error al parsear usuario en catálogo:", e);
+      }
+    }
+  }, []);
+
+  // NUEVO: si es EMPRESA, obtener su empresa desde /empresas/mi_empresa/
+  useEffect(() => {
+    if (usuario && usuario.rol === "EMPRESA") {
+      api
+        .get("/empresas/mi_empresa/")
+        .then((r) => {
+          // Puede venir 200 con data o 204 sin cuerpo
+          setMiEmpresa(r.data || null);
+        })
+        .catch((e) => {
+          console.error("Error al cargar mi_empresa en catálogo:", e);
+          setMiEmpresa(null);
+        });
+    }
+  }, [usuario]);
+
+  // Función para recargar los productos
+  const cargarProductos = () => {
+    api
+      .get("/productos/")
+      .then((r) => {
+        const data = Array.isArray(r.data) ? r.data : r.data.results || [];
+        setItems(data);
+      })
+      .catch((e) => setErr(e.message));
+  };
 
   // Cargar productos, empresas y categorías al montar el componente
   useEffect(() => {
@@ -43,35 +87,62 @@ export default function Catalogo() {
       .catch(() => setErr("Error al cargar categorías"));
   }, []);
 
-  // Función para recargar los productos
-  const cargarProductos = () => {
-    api
-      .get("/productos/")
-      .then((r) => {
-        const data = Array.isArray(r.data) ? r.data : r.data.results || [];
-        setItems(data);
-      })
-      .catch((e) => setErr(e.message));
-  };
-
   // Función para solicitar cotización de un producto
+   // Enviar cotización SOLO si es CLIENTE logueado
   const solicitar = async (producto) => {
+    const token = localStorage.getItem("token_access");
+    const storedUser = localStorage.getItem("usuario");
+
+    if (!token || !storedUser) {
+      alert(
+        "Para solicitar una cotización debes iniciar sesión como cliente.\n\nVe al menú 'Registro cliente' o 'Login cliente'."
+      );
+      return;
+    }
+
+    let usuario = null;
     try {
-      const nombre = prompt("Tu nombre (solicitante):");
-      if (!nombre) return;
-
-      await api.post("/cotizaciones/", {
-        empresa: producto.empresa, // id empresa dueña del producto
-        solicitante: nombre,
-        mensaje: `Consulta por: ${producto.nombre}`,
-      });
-
-      alert("Solicitud enviada. La empresa te contactará.");
+      usuario = JSON.parse(storedUser);
     } catch (e) {
-      console.error(e);
-      alert("No se pudo enviar la cotización.");
+      console.error("Error al leer usuario desde localStorage:", e);
+    }
+
+    if (!usuario || usuario.rol !== "CLIENTE") {
+      alert(
+        "Solo los usuarios con rol CLIENTE pueden solicitar cotizaciones.\nCierra sesión e ingresa con una cuenta de cliente."
+      );
+      return;
+    }
+
+    const mensaje = prompt(
+      "Escribe tu consulta para la empresa (ej: cantidades, condiciones de pago, etc.):"
+    );
+    if (!mensaje) return;
+
+    try {
+      await api.post(
+        "/cotizaciones/",
+        {
+          empresa: producto.empresa, // id de la empresa dueña del producto
+          solicitante: usuario.nombre || usuario.correo,
+          mensaje: mensaje,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert(
+        "✅ Cotización enviada.\nPuedes verla luego en el menú 'Mis cotizaciones'."
+      );
+    } catch (e) {
+      console.error("Error al enviar cotización:", e?.response?.data || e);
+      alert("❌ No se pudo enviar la cotización.");
     }
   };
+
 
   // Función para crear un nuevo producto
   const crearProducto = async (e) => {
@@ -89,7 +160,7 @@ export default function Catalogo() {
         nombre,
         descripcion,
         precio: precioNumero,
-        empresa: selectedEmpresa,
+        empresa: selectedEmpresa,    // el backend finalmente usará la empresa del usuario
         categoria: selectedCategoria,
       });
 
@@ -119,9 +190,20 @@ export default function Catalogo() {
       alert("Producto creado con éxito 🎉");
     } catch (error) {
       console.error("Error al crear el producto:", error);
-      alert("Error al crear el producto.");
+
+      const detail =
+        error?.response?.data?.detail ||
+        error?.response?.data?.error ||
+        "Error al crear el producto.";
+
+      alert(detail);
     }
   };
+
+  // Flags útiles
+  const esEmpresa = usuario && usuario.rol === "EMPRESA";
+  const empresaAprobada = miEmpresa && miEmpresa.aprobada === true;
+  const empresaPendiente = miEmpresa && miEmpresa.aprobada === false;
 
   return (
     <main className="bg-light min-vh-100">
@@ -139,7 +221,7 @@ export default function Catalogo() {
           </p>
         </header>
 
-        {/* BOTÓN FORMULARIO */}
+        {/* CABECERA: contador + botón (controlado por rol y aprobación) */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0 text-secondary">
             Productos registrados:{" "}
@@ -148,16 +230,48 @@ export default function Catalogo() {
             </span>
           </h5>
 
-          <button
-            className="btn btn-success"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? "Cerrar formulario" : "Crear producto"}
-          </button>
+          {/* Solo EMPRESA con empresa aprobada ve el botón Crear producto */}
+          {esEmpresa && empresaAprobada && (
+            <button
+              className="btn btn-success"
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm ? "Cerrar formulario" : "Crear producto"}
+            </button>
+          )}
         </div>
 
-        {/* FORMULARIO CREACIÓN PRODUCTO */}
-        {showForm && (
+        {/* Mensajes informativos según rol / estado empresa */}
+        {(!usuario || !esEmpresa) && (
+          <p className="text-muted mb-3">
+            El catálogo es público. La creación de productos está disponible
+            solo para empresas usuarias registradas en ZofriConnect.
+          </p>
+        )}
+
+        {esEmpresa && !miEmpresa && (
+          <p className="text-warning mb-3">
+            Tu cuenta está registrada como <strong>EMPRESA</strong>, pero aún no
+            tiene una empresa vinculada en el sistema. Solicita a un
+            administrador que asocie tu usuario a una Empresa.
+          </p>
+        )}
+
+        {esEmpresa && empresaPendiente && (
+          <div className="alert alert-warning mb-3">
+            <h6 className="fw-bold text-primary mb-1">
+              Tu empresa está pendiente de aprobación
+            </h6>
+            <p className="mb-0 small">
+              Aún no puedes crear productos desde el catálogo. Un administrador
+              debe aprobar tu empresa para habilitar las funciones de
+              publicación.
+            </p>
+          </div>
+        )}
+
+        {/* FORMULARIO CREACIÓN PRODUCTO (solo EMPRESA + empresa aprobada) */}
+        {esEmpresa && empresaAprobada && showForm && (
           <div className="card border-0 shadow-sm p-3 mb-4">
             <h4 className="fw-bold text-primary mb-3">Nuevo producto</h4>
             <p className="text-muted small mb-3">
@@ -309,8 +423,11 @@ export default function Catalogo() {
                   </p>
 
                   <p className="card-text small text-muted flex-grow-1">
-                    {p.descripcion ||
-                      "Producto publicado por empresa usuaria del recinto amurallado ZOFRI."}
+                    {p.descripcion || "Sin descripción"}
+                  </p>
+
+                  <p className="small text-primary fw-semibold mt-2">
+                    Publicado por: {p.empresa_nombre || "Empresa desconocida"}
                   </p>
 
                   <button
