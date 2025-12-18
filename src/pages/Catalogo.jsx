@@ -94,9 +94,7 @@ export default function Catalogo() {
     const storedUser = localStorage.getItem("usuario");
 
     if (!token || !storedUser) {
-      alert(
-        "Para solicitar una cotización debes iniciar sesión como cliente.\n\nVe al menú 'Registro cliente' o 'Login cliente'."
-      );
+      alert("Debes iniciar sesión como cliente para solicitar una cotización.");
       return;
     }
 
@@ -104,39 +102,35 @@ export default function Catalogo() {
     try {
       usuario = JSON.parse(storedUser);
     } catch (e) {
-      console.error("Error al leer usuario desde localStorage:", e);
-    }
-
-    if (!usuario || usuario.rol !== "CLIENTE") {
-      alert(
-        "Solo los usuarios con rol CLIENTE pueden solicitar cotizaciones.\nCierra sesión e ingresa con una cuenta de cliente."
-      );
+      console.error("Error parseando usuario:", e);
       return;
     }
 
-    const mensaje = prompt(
-      "Escribe tu consulta para la empresa (ej: cantidades, condiciones de pago, etc.):"
-    );
+    if (!usuario || usuario.rol !== "CLIENTE") {
+      alert("Solo los clientes pueden solicitar cotizaciones.");
+      return;
+    }
+
+    const mensaje = prompt("Escribe tu consulta para la empresa:");
     if (!mensaje) return;
 
     try {
       await api.post(
         "/cotizaciones/",
         {
-          empresa: producto.empresa, // id de la empresa dueña del producto
+          empresa: producto.empresa, // id de la empresa
+          producto: producto.id,     // ✅ obligatorio
           solicitante: usuario.nombre || usuario.correo,
           mensaje: mensaje,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          },
+          }
         }
       );
 
-      alert(
-        "✅ Cotización enviada.\nPuedes verla luego en el menú 'Mis cotizaciones'."
-      );
+      alert("✅ Cotización enviada correctamente.");
     } catch (e) {
       console.error("Error al enviar cotización:", e?.response?.data || e);
       alert("❌ No se pudo enviar la cotización.");
