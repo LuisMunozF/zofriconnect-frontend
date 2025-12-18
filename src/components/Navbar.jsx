@@ -122,17 +122,6 @@ export default function Navbar() {
             ZofriConnect
           </Link>
 
-          {/* Buscador 
-<form className="d-none d-lg-flex ms-auto order-1 order-lg-2 w-25">
-  <input
-    className="form-control"
-    type="search"
-    placeholder="Buscar empresa o producto..."
-  />
-</form>
-*/}
-
-
           {/* Zona derecha */}
           <ul className="navbar-nav ms-3 order-3 align-items-center">
             {usuario ? (
@@ -150,7 +139,7 @@ export default function Navbar() {
                 </li>
 
                 {/* Botón Panel Admin (solo ADMIN) */}
-                {usuario.rol === "ADMIN" && (
+                {usuario?.rol === "ADMIN" && (
                   <li className="nav-item me-2">
                     <Link className="btn btn-dark btn-sm" to="/admin">
                       Panel Admin
@@ -158,9 +147,8 @@ export default function Navbar() {
                   </li>
                 )}
 
-                {/* Botón Mi Empresa (solo EMPRESA) */}
                 {/* Botones de empresa (solo EMPRESA) */}
-                {usuario.rol === "EMPRESA" && (
+                {usuario?.rol === "EMPRESA" && (
                   <>
                     <li className="nav-item me-2">
                       <Link
@@ -170,8 +158,6 @@ export default function Navbar() {
                         Mi empresa
                       </Link>
                     </li>
-
-                    {/* NUEVO: cotizaciones recibidas */}
                     <li className="nav-item me-2">
                       <Link
                         className="btn btn-outline-secondary btn-sm"
@@ -184,7 +170,7 @@ export default function Navbar() {
                 )}
 
                 {/* Botón Mis Cotizaciones (solo CLIENTE) */}
-                {usuario.rol === "CLIENTE" && (
+                {usuario?.rol === "CLIENTE" && (
                   <li className="nav-item me-2">
                     <Link
                       className="btn btn-outline-success btn-sm"
@@ -217,7 +203,6 @@ export default function Navbar() {
                     Registrar empresa
                   </Link>
                 </li>
-                {/* NUEVO: registro de clientes */}
                 <li className="nav-item">
                   <Link
                     className="btn btn-outline-success btn-sm"
@@ -237,10 +222,7 @@ export default function Navbar() {
         <div className="container-fluid">
           <ul className="nav justify-content-center py-2 fw-semibold">
             <li className="nav-item dropdown px-3">
-              <span
-                className="nav-link dropdown-toggle"
-                data-bs-toggle="dropdown"
-              >
+              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                 Electrónica y Tecnología
               </span>
               <ul className="dropdown-menu">
@@ -257,10 +239,7 @@ export default function Navbar() {
             </li>
 
             <li className="nav-item dropdown px-3">
-              <span
-                className="nav-link dropdown-toggle"
-                data-bs-toggle="dropdown"
-              >
+              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                 Automotriz y Repuestos
               </span>
               <ul className="dropdown-menu">
@@ -277,10 +256,7 @@ export default function Navbar() {
             </li>
 
             <li className="nav-item dropdown px-3">
-              <span
-                className="nav-link dropdown-toggle"
-                data-bs-toggle="dropdown"
-              >
+              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                 Hogar y Deco
               </span>
               <ul className="dropdown-menu">
@@ -294,17 +270,12 @@ export default function Navbar() {
             </li>
 
             <li className="nav-item dropdown px-3">
-              <span
-                className="nav-link dropdown-toggle"
-                data-bs-toggle="dropdown"
-              >
+              <span className="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                 Textil y Calzado
               </span>
               <ul className="dropdown-menu">
                 <li>
-                  <span className="dropdown-item">
-                    Ropa y accesorios mayoristas
-                  </span>
+                  <span className="dropdown-item">Ropa y accesorios mayoristas</span>
                 </li>
                 <li>
                   <span className="dropdown-item">Calzado</span>
