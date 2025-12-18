@@ -259,7 +259,7 @@ export default function CotizacionesEmpresa() {
 
                   <div className="mb-2">
                     <span className="badge bg-success me-2">Producto</span>
-                    {cotizacionActiva.producto.nombre}
+                    {cotizacionActiva.producto_nombre}
                   </div>
 
                   <div className="mb-2">

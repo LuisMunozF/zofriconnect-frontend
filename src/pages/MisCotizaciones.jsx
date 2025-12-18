@@ -6,9 +6,7 @@ export default function MisCotizaciones() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [detalleCotizacion, setDetalleCotizacion] = useState(null);
-
-  // Nuevo estado para el modal de feedback
-  const [modalFeedback, setModalFeedback] = useState({ mostrar: false, tipo: "", mensaje: "" });
+  const [mensajeEstado, setMensajeEstado] = useState(null); // Nuevo estado para mostrar mensajes bonitos
 
   const token = localStorage.getItem("token_access");
 
@@ -30,10 +28,12 @@ export default function MisCotizaciones() {
 
   const actualizarEstado = async (cotizacionId, nuevoEstado, estadoActual) => {
     if (nuevoEstado === "cancelada" && estadoActual !== "pendiente") {
-      return showModalFeedback("warning", "Solo puedes cancelar cotizaciones pendientes.");
+      setMensajeEstado({ tipo: "warning", texto: "Solo puedes cancelar cotizaciones pendientes." });
+      return;
     }
     if ((nuevoEstado === "aceptada" || nuevoEstado === "rechazada") && estadoActual !== "respondida") {
-      return showModalFeedback("warning", "Solo puedes aceptar o rechazar cotizaciones respondidas.");
+      setMensajeEstado({ tipo: "warning", texto: "Solo puedes aceptar o rechazar cotizaciones respondidas." });
+      return;
     }
 
     try {
@@ -54,24 +54,29 @@ export default function MisCotizaciones() {
         setDetalleCotizacion({ ...detalleCotizacion, estado: nuevoEstado });
       }
 
-      // Mostrar modal bonito según acción
+      // Mensaje bonito según acción
+      let texto = "";
+      let tipo = "";
       if (nuevoEstado === "aceptada") {
-        showModalFeedback("success", "¡Has aceptado la cotización correctamente!");
+        texto = "¡Has aceptado la cotización correctamente ✅!";
+        tipo = "success";
       } else if (nuevoEstado === "rechazada") {
-        showModalFeedback("danger", "Has rechazado la cotización.");
+        texto = "Has rechazado la cotización ❌";
+        tipo = "danger";
       } else {
-        showModalFeedback("secondary", "Cotización cancelada.");
+        texto = "Cotización cancelada ❌";
+        tipo = "secondary";
       }
+
+      setMensajeEstado({ tipo, texto });
+
+      // Autoocultar mensaje luego de 3 segundos
+      setTimeout(() => setMensajeEstado(null), 3000);
     } catch (e) {
       console.error(e);
-      showModalFeedback("danger", "No se pudo actualizar la cotización.");
+      setMensajeEstado({ tipo: "danger", texto: "No se pudo actualizar la cotización ❌" });
+      setTimeout(() => setMensajeEstado(null), 3000);
     }
-  };
-
-  // Función para mostrar modal feedback
-  const showModalFeedback = (tipo, mensaje) => {
-    setModalFeedback({ mostrar: true, tipo, mensaje });
-    setTimeout(() => setModalFeedback({ mostrar: false, tipo: "", mensaje: "" }), 3000);
   };
 
   const getBadgeClass = (estado) => {
@@ -95,6 +100,12 @@ export default function MisCotizaciones() {
     <main className="bg-light min-vh-100">
       <div className="container py-5">
         <h1 className="fw-bold text-primary mb-3">Mis cotizaciones</h1>
+
+        {mensajeEstado && (
+          <div className={`alert alert-${mensajeEstado.tipo} shadow-sm fs-6 fw-semibold text-center`}>
+            {mensajeEstado.texto}
+          </div>
+        )}
 
         {loading && (
           <div className="text-center py-5">
@@ -190,7 +201,7 @@ export default function MisCotizaciones() {
                   <p><strong>Fecha:</strong> {new Date(detalleCotizacion.fecha).toLocaleString()}</p>
                   <p><strong>Empresa:</strong> {detalleCotizacion.empresa_nombre}</p>
                   <p><strong>Mensaje:</strong> {detalleCotizacion.mensaje}</p>
-                  <p><strong>Producto:</strong> {detalleCotizacion.producto.nombre}</p>
+                  <p><strong>Producto:</strong> {detalleCotizacion.producto_nombre}</p>
                   <p><strong>Cantidad:</strong> {detalleCotizacion.cantidad}</p>
                   <p><strong>Precio unitario:</strong> ${detalleCotizacion.precio_unitario}</p>
                   <p><strong>Subtotal:</strong> ${detalleCotizacion.subtotal}</p>
@@ -239,28 +250,6 @@ export default function MisCotizaciones() {
             </div>
           </div>
         )}
-
-        {/* MODAL DE FEEDBACK BONITO */}
-        {modalFeedback.mostrar && (
-          <div className="modal show d-block" tabIndex="-1">
-            <div className="modal-dialog modal-dialog-centered">
-              <div className={`modal-content border-${modalFeedback.tipo} shadow-lg`}>
-                <div className={`modal-header bg-${modalFeedback.tipo} text-white`}>
-                  <h5 className="modal-title">
-                    {modalFeedback.tipo === "success" ? "¡Éxito!" :
-                     modalFeedback.tipo === "danger" ? "Atención" :
-                     "Información"}
-                  </h5>
-                  <button type="button" className="btn-close btn-close-white" onClick={() => setModalFeedback({ mostrar: false, tipo: "", mensaje: "" })}></button>
-                </div>
-                <div className="modal-body text-center fs-5">
-                  {modalFeedback.mensaje}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
     </main>
   );
