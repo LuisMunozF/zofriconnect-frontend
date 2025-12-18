@@ -7,6 +7,9 @@ export default function MisCotizaciones() {
   const [err, setErr] = useState("");
   const [detalleCotizacion, setDetalleCotizacion] = useState(null);
 
+  // Nuevo estado para el modal de feedback
+  const [modalFeedback, setModalFeedback] = useState({ mostrar: false, tipo: "", mensaje: "" });
+
   const token = localStorage.getItem("token_access");
 
   useEffect(() => {
@@ -20,12 +23,19 @@ export default function MisCotizaciones() {
         .finally(() => setLoading(false));
     };
 
-    cargarCotizaciones(); 
+    cargarCotizaciones();
     const intervalo = setInterval(cargarCotizaciones, 5000);
     return () => clearInterval(intervalo);
   }, [token]);
 
-  const actualizarEstado = async (cotizacionId, nuevoEstado) => {
+  const actualizarEstado = async (cotizacionId, nuevoEstado, estadoActual) => {
+    if (nuevoEstado === "cancelada" && estadoActual !== "pendiente") {
+      return showModalFeedback("warning", "Solo puedes cancelar cotizaciones pendientes.");
+    }
+    if ((nuevoEstado === "aceptada" || nuevoEstado === "rechazada") && estadoActual !== "respondida") {
+      return showModalFeedback("warning", "Solo puedes aceptar o rechazar cotizaciones respondidas.");
+    }
+
     try {
       let endpoint = `/cotizaciones/${cotizacionId}/`;
       if (nuevoEstado === "aceptada") endpoint += "aceptar/";
@@ -44,15 +54,24 @@ export default function MisCotizaciones() {
         setDetalleCotizacion({ ...detalleCotizacion, estado: nuevoEstado });
       }
 
-      alert(
-        nuevoEstado === "aceptada"
-          ? "Cotización aceptada ✅"
-          : "Cotización cancelada/rechazada ❌"
-      );
+      // Mostrar modal bonito según acción
+      if (nuevoEstado === "aceptada") {
+        showModalFeedback("success", "¡Has aceptado la cotización correctamente!");
+      } else if (nuevoEstado === "rechazada") {
+        showModalFeedback("danger", "Has rechazado la cotización.");
+      } else {
+        showModalFeedback("secondary", "Cotización cancelada.");
+      }
     } catch (e) {
       console.error(e);
-      alert("No se pudo actualizar la cotización ❌");
+      showModalFeedback("danger", "No se pudo actualizar la cotización.");
     }
+  };
+
+  // Función para mostrar modal feedback
+  const showModalFeedback = (tipo, mensaje) => {
+    setModalFeedback({ mostrar: true, tipo, mensaje });
+    setTimeout(() => setModalFeedback({ mostrar: false, tipo: "", mensaje: "" }), 3000);
   };
 
   const getBadgeClass = (estado) => {
@@ -132,7 +151,7 @@ export default function MisCotizaciones() {
                           {c.estado === "pendiente" && (
                             <button
                               className="btn btn-sm btn-outline-danger me-2"
-                              onClick={() => actualizarEstado(c.id, "cancelada")}
+                              onClick={() => actualizarEstado(c.id, "cancelada", c.estado)}
                             >
                               Cancelar
                             </button>
@@ -197,13 +216,13 @@ export default function MisCotizaciones() {
                     <>
                       <button
                         className="btn btn-success"
-                        onClick={() => actualizarEstado(detalleCotizacion.id, "aceptada")}
+                        onClick={() => actualizarEstado(detalleCotizacion.id, "aceptada", detalleCotizacion.estado)}
                       >
                         Aceptar
                       </button>
                       <button
                         className="btn btn-danger"
-                        onClick={() => actualizarEstado(detalleCotizacion.id, "rechazada")}
+                        onClick={() => actualizarEstado(detalleCotizacion.id, "rechazada", detalleCotizacion.estado)}
                       >
                         Rechazar
                       </button>
@@ -220,6 +239,28 @@ export default function MisCotizaciones() {
             </div>
           </div>
         )}
+
+        {/* MODAL DE FEEDBACK BONITO */}
+        {modalFeedback.mostrar && (
+          <div className="modal show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className={`modal-content border-${modalFeedback.tipo} shadow-lg`}>
+                <div className={`modal-header bg-${modalFeedback.tipo} text-white`}>
+                  <h5 className="modal-title">
+                    {modalFeedback.tipo === "success" ? "¡Éxito!" :
+                     modalFeedback.tipo === "danger" ? "Atención" :
+                     "Información"}
+                  </h5>
+                  <button type="button" className="btn-close btn-close-white" onClick={() => setModalFeedback({ mostrar: false, tipo: "", mensaje: "" })}></button>
+                </div>
+                <div className="modal-body text-center fs-5">
+                  {modalFeedback.mensaje}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );

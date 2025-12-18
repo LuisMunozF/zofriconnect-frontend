@@ -5,23 +5,29 @@ export default function Catalogo() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState("");
 
-  // NUEVO: usuario logueado
   const [usuario, setUsuario] = useState(null);
-  // NUEVO: empresa asociada al usuario (si es EMPRESA)
   const [miEmpresa, setMiEmpresa] = useState(null);
 
-  // Estado del formulario para crear un producto
   const [showForm, setShowForm] = useState(false);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState("");
   const [imagen, setImagen] = useState(null);
-  const [empresas, setEmpresas] = useState([]); // Asegurarse que sea un array
+  const [empresas, setEmpresas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState("");
   const [selectedCategoria, setSelectedCategoria] = useState("");
 
-  // NUEVO: leer usuario desde localStorage
+  // NUEVO: estado del modal de cotización
+  const [modalCotizacion, setModalCotizacion] = useState({
+    abierto: false,
+    producto: null,
+    mensaje: "",
+    cantidad: 1,
+    contacto: "",
+    enviando: false,
+  });
+
   useEffect(() => {
     const stored = localStorage.getItem("usuario");
     if (stored) {
@@ -33,13 +39,11 @@ export default function Catalogo() {
     }
   }, []);
 
-  // NUEVO: si es EMPRESA, obtener su empresa desde /empresas/mi_empresa/
   useEffect(() => {
     if (usuario && usuario.rol === "EMPRESA") {
       api
         .get("/empresas/mi_empresa/")
         .then((r) => {
-          // Puede venir 200 con data o 204 sin cuerpo
           setMiEmpresa(r.data || null);
         })
         .catch((e) => {
@@ -49,7 +53,6 @@ export default function Catalogo() {
     }
   }, [usuario]);
 
-  // Función para recargar los productos
   const cargarProductos = () => {
     api
       .get("/productos/")
@@ -60,11 +63,9 @@ export default function Catalogo() {
       .catch((e) => setErr(e.message));
   };
 
-  // Cargar productos, empresas y categorías al montar el componente
   useEffect(() => {
     cargarProductos();
 
-    // Obtener empresas
     api
       .get("/empresas/")
       .then((r) => {
@@ -75,7 +76,6 @@ export default function Catalogo() {
       })
       .catch(() => setErr("Error al cargar empresas"));
 
-    // Obtener categorías
     api
       .get("/categorias/")
       .then((r) => {
@@ -87,14 +87,42 @@ export default function Catalogo() {
       .catch(() => setErr("Error al cargar categorías"));
   }, []);
 
-  // Función para solicitar cotización de un producto
-   // Enviar cotización SOLO si es CLIENTE logueado
-  const solicitar = async (producto) => {
-    const token = localStorage.getItem("token_access");
+  // ------------------------
+  // SOLICITAR COTIZACIÓN (AHORA CON MODAL)
+  // ------------------------
+  const abrirModalCotizacion = (producto) => {
     const storedUser = localStorage.getItem("usuario");
-
-    if (!token || !storedUser) {
+    if (!storedUser) {
       alert("Debes iniciar sesión como cliente para solicitar una cotización.");
+      return;
+    }
+    const usuario = JSON.parse(storedUser);
+    if (usuario.rol !== "CLIENTE") {
+      alert("Solo los clientes pueden solicitar cotizaciones.");
+      return;
+    }
+    setModalCotizacion({
+      abierto: true,
+      producto,
+      mensaje: "",
+      cantidad: 1,
+      contacto: "",
+      enviando: false,
+    });
+  };
+
+  const enviarCotizacion = async () => {
+    const { producto, mensaje, cantidad, contacto } = modalCotizacion;
+    const storedUser = localStorage.getItem("usuario");
+    const token = localStorage.getItem("token_access");
+
+    if (!mensaje || mensaje.trim().length < 10) {
+      alert("Debes escribir un mensaje de al menos 10 caracteres.");
+      return;
+    }
+
+    if (!cantidad || cantidad <= 0) {
+      alert("Debes indicar una cantidad mayor a 0.");
       return;
     }
 
@@ -106,71 +134,62 @@ export default function Catalogo() {
       return;
     }
 
-    if (!usuario || usuario.rol !== "CLIENTE") {
-      alert("Solo los clientes pueden solicitar cotizaciones.");
-      return;
-    }
-
-    const mensaje = prompt("Escribe tu consulta para la empresa:");
-    if (!mensaje) return;
-
     try {
+      setModalCotizacion((prev) => ({ ...prev, enviando: true }));
+
       await api.post(
         "/cotizaciones/",
         {
-          empresa: producto.empresa, // id de la empresa
-          producto: producto.id,     // ✅ obligatorio
+          empresa: producto.empresa,
+          producto: producto.id,
           solicitante: usuario.nombre || usuario.correo,
-          mensaje: mensaje,
+          mensaje,
+          cantidad,
+          contacto,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       alert("✅ Cotización enviada correctamente.");
+      setModalCotizacion({ abierto: false, producto: null, mensaje: "", cantidad: 1, contacto: "", enviando: false });
     } catch (e) {
       console.error("Error al enviar cotización:", e?.response?.data || e);
       alert("❌ No se pudo enviar la cotización.");
+      setModalCotizacion((prev) => ({ ...prev, enviando: false }));
     }
   };
 
-
-  // Función para crear un nuevo producto
+  // ------------------------
+  // CREAR PRODUCTO
+  // ------------------------
   const crearProducto = async (e) => {
     e.preventDefault();
-
     const precioNumero = parseFloat(precio);
     if (isNaN(precioNumero)) {
       alert("El precio debe ser un número válido");
       return;
     }
-
     try {
-      // Crear producto
       const res = await api.post("/productos/", {
         nombre,
         descripcion,
         precio: precioNumero,
-        empresa: selectedEmpresa,    // el backend finalmente usará la empresa del usuario
+        empresa: selectedEmpresa,
         categoria: selectedCategoria,
       });
 
       const productoId = res.data.id;
 
-      // Subir imagen si existe
       if (imagen) {
         const formData = new FormData();
         formData.append("imagen", imagen);
-
         await api.post(`/productos/${productoId}/subir_imagen/`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
 
-      // Limpiar formulario
       setNombre("");
       setDescripcion("");
       setPrecio("");
@@ -179,22 +198,18 @@ export default function Catalogo() {
       setSelectedEmpresa("");
       setSelectedCategoria("");
 
-      // Recargar productos
       cargarProductos();
       alert("Producto creado con éxito 🎉");
     } catch (error) {
       console.error("Error al crear el producto:", error);
-
       const detail =
         error?.response?.data?.detail ||
         error?.response?.data?.error ||
         "Error al crear el producto.";
-
       alert(detail);
     }
   };
 
-  // Flags útiles
   const esEmpresa = usuario && usuario.rol === "EMPRESA";
   const empresaAprobada = miEmpresa && miEmpresa.aprobada === true;
   const empresaPendiente = miEmpresa && miEmpresa.aprobada === false;
@@ -202,20 +217,18 @@ export default function Catalogo() {
   return (
     <main className="bg-light min-vh-100">
       <section className="container py-5">
-        {/* ENCABEZADO CONTEXTO */}
+        {/* ENCABEZADO */}
         <header className="mb-4">
           <span className="badge bg-primary-subtle text-primary mb-2">
             Módulo · Catálogo mayorista
           </span>
           <h1 className="fw-bold text-primary">Catálogo de productos</h1>
           <p className="text-muted">
-            Vista del catálogo mayorista de ZofriConnect. Aquí las empresas
-            usuarias pueden publicar productos y recibir solicitudes de
-            cotización desde la misma plataforma.
+            Vista del catálogo mayorista de ZofriConnect.
           </p>
         </header>
 
-        {/* CABECERA: contador + botón (controlado por rol y aprobación) */}
+        {/* Botón Crear producto */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0 text-secondary">
             Productos registrados:{" "}
@@ -224,7 +237,6 @@ export default function Catalogo() {
             </span>
           </h5>
 
-          {/* Solo EMPRESA con empresa aprobada ve el botón Crear producto */}
           {esEmpresa && empresaAprobada && (
             <button
               className="btn btn-success"
@@ -235,19 +247,16 @@ export default function Catalogo() {
           )}
         </div>
 
-        {/* Mensajes informativos según rol / estado empresa */}
+        {/* Mensajes */}
         {(!usuario || !esEmpresa) && (
           <p className="text-muted mb-3">
-            El catálogo es público. La creación de productos está disponible
-            solo para empresas usuarias registradas en ZofriConnect.
+            El catálogo es público. La creación de productos está disponible solo para empresas.
           </p>
         )}
 
         {esEmpresa && !miEmpresa && (
           <p className="text-warning mb-3">
-            Tu cuenta está registrada como <strong>EMPRESA</strong>, pero aún no
-            tiene una empresa vinculada en el sistema. Solicita a un
-            administrador que asocie tu usuario a una Empresa.
+            Tu cuenta está registrada como EMPRESA, pero aún no tiene empresa vinculada.
           </p>
         )}
 
@@ -257,28 +266,18 @@ export default function Catalogo() {
               Tu empresa está pendiente de aprobación
             </h6>
             <p className="mb-0 small">
-              Aún no puedes crear productos desde el catálogo. Un administrador
-              debe aprobar tu empresa para habilitar las funciones de
-              publicación.
+              Aún no puedes crear productos desde el catálogo.
             </p>
           </div>
         )}
 
-        {/* FORMULARIO CREACIÓN PRODUCTO (solo EMPRESA + empresa aprobada) */}
+        {/* FORMULARIO CREACIÓN PRODUCTO */}
         {esEmpresa && empresaAprobada && showForm && (
           <div className="card border-0 shadow-sm p-3 mb-4">
             <h4 className="fw-bold text-primary mb-3">Nuevo producto</h4>
-            <p className="text-muted small mb-3">
-              Completa los datos del producto mayorista que será visible en el
-              catálogo digital de ZofriConnect.
-            </p>
-
             <form onSubmit={crearProducto} className="row g-3">
-              {/* Empresa */}
               <div className="col-md-6">
-                <label className="form-label fw-semibold small">
-                  Empresa usuaria
-                </label>
+                <label className="form-label fw-semibold small">Empresa usuaria</label>
                 <select
                   className="form-control"
                   value={selectedEmpresa}
@@ -286,23 +285,15 @@ export default function Catalogo() {
                   required
                 >
                   <option value="">Seleccionar Empresa</option>
-                  {empresas.length > 0 ? (
-                    empresas.map((empresa) => (
-                      <option key={empresa.id} value={empresa.id}>
-                        {empresa.nombre || empresa.nombre_fantasia}
-                      </option>
-                    ))
-                  ) : (
-                    <option>No hay empresas disponibles</option>
-                  )}
+                  {empresas.map((empresa) => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nombre || empresa.nombre_fantasia}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              {/* Categoría */}
               <div className="col-md-6">
-                <label className="form-label fw-semibold small">
-                  Categoría / rubro
-                </label>
+                <label className="form-label fw-semibold small">Categoría / rubro</label>
                 <select
                   className="form-control"
                   value={selectedCategoria}
@@ -310,19 +301,13 @@ export default function Catalogo() {
                   required
                 >
                   <option value="">Seleccionar Categoría</option>
-                  {categorias.length > 0 ? (
-                    categorias.map((categoria) => (
-                      <option key={categoria.id} value={categoria.id}>
-                        {categoria.nombre}
-                      </option>
-                    ))
-                  ) : (
-                    <option>No hay categorías disponibles</option>
-                  )}
+                  {categorias.map((categoria) => (
+                    <option key={categoria.id} value={categoria.id}>
+                      {categoria.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              {/* Nombre */}
               <div className="col-md-6">
                 <label className="form-label fw-semibold small">Nombre</label>
                 <input
@@ -333,12 +318,8 @@ export default function Catalogo() {
                   required
                 />
               </div>
-
-              {/* Precio */}
               <div className="col-md-6">
-                <label className="form-label fw-semibold small">
-                  Precio referencial mayorista
-                </label>
+                <label className="form-label fw-semibold small">Precio referencial mayorista</label>
                 <input
                   className="form-control"
                   type="number"
@@ -348,86 +329,51 @@ export default function Catalogo() {
                   required
                 />
               </div>
-
-              {/* Descripción */}
               <div className="col-12">
-                <label className="form-label fw-semibold small">
-                  Descripción
-                </label>
+                <label className="form-label fw-semibold small">Descripción</label>
                 <textarea
                   className="form-control"
                   rows="2"
-                  placeholder="Detalle del producto, condición de venta mayorista, etc."
+                  placeholder="Detalle del producto"
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   required
                 />
               </div>
-
-              {/* Imagen */}
               <div className="col-md-6">
-                <label className="form-label fw-semibold small">
-                  Imagen (subida a Cloudinary)
-                </label>
+                <label className="form-label fw-semibold small">Imagen</label>
                 <input
                   className="form-control"
                   type="file"
                   accept="image/*"
                   onChange={(e) => setImagen(e.target.files[0])}
                 />
-                <p className="small text-muted mt-1">
-                  Formato JPG o PNG. Se almacenará mediante el endpoint de
-                  imagen del backend.
-                </p>
               </div>
-
-              {/* Botón guardar */}
               <div className="col-12 text-end">
-                <button className="btn btn-primary" type="submit">
-                  Guardar producto
-                </button>
+                <button className="btn btn-primary" type="submit">Guardar producto</button>
               </div>
             </form>
           </div>
         )}
 
-        {/* ERRORES */}
         {err && <div className="alert alert-danger">{err}</div>}
 
-        {/* LISTADO DE PRODUCTOS */}
+        {/* LISTADO PRODUCTOS */}
         <section className="row g-4 mt-2">
           {items.map((p) => (
             <div key={p.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
               <article className="card h-100 border-0 shadow-sm product-card">
                 {p.imagen_url && (
                   <div className="ratio ratio-4x3 bg-light">
-                    <img
-                      src={p.imagen_url}
-                      alt={p.nombre}
-                      className="card-img-top rounded-top object-fit-cover"
-                    />
+                    <img src={p.imagen_url} alt={p.nombre} className="card-img-top rounded-top object-fit-cover"/>
                   </div>
                 )}
-
                 <div className="card-body d-flex flex-column">
                   <h6 className="card-title fw-bold mb-1">{p.nombre}</h6>
-
-                  <p className="card-text fw-semibold text-primary mb-1">
-                    ${String(p.precio)}
-                  </p>
-
-                  <p className="card-text small text-muted flex-grow-1">
-                    {p.descripcion || "Sin descripción"}
-                  </p>
-
-                  <p className="small text-primary fw-semibold mt-2">
-                    Publicado por: {p.empresa_nombre || "Empresa desconocida"}
-                  </p>
-
-                  <button
-                    className="btn btn-outline-primary btn-sm w-100 mt-2"
-                    onClick={() => solicitar(p)}
-                  >
+                  <p className="card-text fw-semibold text-primary mb-1">${String(p.precio)}</p>
+                  <p className="card-text small text-muted flex-grow-1">{p.descripcion || "Sin descripción"}</p>
+                  <p className="small text-primary fw-semibold mt-2">Publicado por: {p.empresa_nombre || "Empresa desconocida"}</p>
+                  <button className="btn btn-outline-primary btn-sm w-100 mt-2" onClick={() => abrirModalCotizacion(p)}>
                     Solicitar cotización
                   </button>
                 </div>
@@ -438,13 +384,64 @@ export default function Catalogo() {
           {items.length === 0 && !err && (
             <div className="col-12 text-center py-5">
               <h5 className="fw-bold text-primary mb-2">Sin productos aún</h5>
-              <p className="text-muted">
-                Puedes crear el primer producto usando el botón{" "}
-                <span className="fw-semibold">“Crear producto”</span>.
-              </p>
+              <p className="text-muted">Puedes crear el primer producto usando el botón “Crear producto”.</p>
             </div>
           )}
         </section>
+
+        {/* ----------------------- */}
+        {/* MODAL COTIZACIÓN */}
+        {/* ----------------------- */}
+        {modalCotizacion.abierto && (
+          <div className="modal show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Solicitar cotización</h5>
+                  <button type="button" className="btn-close" onClick={() => setModalCotizacion({ abierto: false })}></button>
+                </div>
+                <div className="modal-body">
+                  <p><strong>Producto:</strong> {modalCotizacion.producto.nombre}</p>
+                  <div className="mb-3">
+                    <label className="form-label">Cantidad</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      min="1"
+                      value={modalCotizacion.cantidad}
+                      onChange={(e) => setModalCotizacion({ ...modalCotizacion, cantidad: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Mensaje (mín. 10 caracteres)</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={modalCotizacion.mensaje}
+                      onChange={(e) => setModalCotizacion({ ...modalCotizacion, mensaje: e.target.value })}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Correo o teléfono (opcional)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={modalCotizacion.contacto}
+                      onChange={(e) => setModalCotizacion({ ...modalCotizacion, contacto: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={() => setModalCotizacion({ abierto: false })}>Cancelar</button>
+                  <button className="btn btn-primary" disabled={modalCotizacion.enviando} onClick={enviarCotizacion}>
+                    {modalCotizacion.enviando ? "Enviando..." : "Enviar cotización"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </section>
     </main>
   );

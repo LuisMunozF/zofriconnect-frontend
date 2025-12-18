@@ -11,6 +11,10 @@ export default function CotizacionesEmpresa() {
   const [cantidad, setCantidad] = useState(1);
   const [enviando, setEnviando] = useState(false);
 
+  const [mensajeToast, setMensajeToast] = useState("");
+  const [tipoToast, setTipoToast] = useState("success");
+  const [showToast, setShowToast] = useState(false);
+
   const token = localStorage.getItem("token_access");
 
   const cargarCotizaciones = () => {
@@ -39,9 +43,23 @@ export default function CotizacionesEmpresa() {
     cargarCotizaciones();
   }, []);
 
+  useEffect(() => {
+    if (cotizacionActiva) {
+      setCantidad(cotizacionActiva.cantidad || 1);
+      setRespuesta(cotizacionActiva.respuesta || "");
+    }
+  }, [cotizacionActiva]);
+
+  const mostrarToast = (mensaje, tipo = "success") => {
+    setMensajeToast(mensaje);
+    setTipoToast(tipo);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const responderCotizacion = async () => {
-    if (!respuesta.trim()) {
-      alert("Debes escribir una respuesta.");
+    if (!respuesta.trim() || respuesta.trim().length < 10) {
+      mostrarToast("Debes escribir una respuesta de al menos 10 caracteres.", "danger");
       return;
     }
 
@@ -53,14 +71,18 @@ export default function CotizacionesEmpresa() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      const subtotal = cotizacionActiva.precio_unitario * cantidad;
+      const iva = Math.round(subtotal * 0.19);
+      const total = subtotal + iva;
+
       const actualizada = {
         ...cotizacionActiva,
         respuesta,
         estado: "respondida",
         cantidad,
-        subtotal: data.subtotal,
-        iva: data.iva,
-        total: data.total,
+        subtotal,
+        iva,
+        total,
         fecha_respuesta: new Date().toISOString(),
       };
 
@@ -72,21 +94,27 @@ export default function CotizacionesEmpresa() {
       setRespuesta("");
       setCantidad(1);
       document.getElementById("cerrarModal").click();
+      mostrarToast("Cotización respondida ✅", "success");
     } catch (e) {
       console.error(e);
-      alert("No se pudo responder la cotización.");
+      mostrarToast("No se pudo responder la cotización ❌", "danger");
     } finally {
       setEnviando(false);
     }
   };
 
-  const cancelarCotizacion = async (cotizacionId) => {
-    if (!confirm("¿Deseas cancelar esta cotización?")) return;
+  const cancelarCotizacion = async (cotizacionId, estado) => {
+    if (estado !== "pendiente") {
+      mostrarToast("Solo puedes cancelar cotizaciones pendientes.", "danger");
+      return;
+    }
+
+    if (!window.confirm("¿Deseas cancelar esta cotización?")) return;
 
     try {
       await api.patch(
-        `/cotizaciones/${cotizacionId}/`,
-        { estado: "cancelada" },
+        `/cotizaciones/${cotizacionId}/cancelar/`,
+        null,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -94,10 +122,10 @@ export default function CotizacionesEmpresa() {
         c.id === cotizacionId ? { ...c, estado: "cancelada" } : c
       ));
 
-      alert("Cotización cancelada ✅");
+      mostrarToast("Cotización cancelada ✅", "success");
     } catch (e) {
       console.error(e);
-      alert("No se pudo cancelar la cotización ❌");
+      mostrarToast("No se pudo cancelar la cotización ❌", "danger");
     }
   };
 
@@ -118,9 +146,7 @@ export default function CotizacionesEmpresa() {
     }
   };
 
-  const puedeResponder = (estado) => {
-    return !["respondida", "aceptada", "rechazada", "cancelada"].includes(estado);
-  };
+  const puedeResponder = (estado) => ["pendiente", "vista"].includes(estado);
 
   return (
     <main className="bg-light min-vh-100">
@@ -180,7 +206,7 @@ export default function CotizacionesEmpresa() {
                               {c.estado === "pendiente" && (
                                 <button
                                   className="btn btn-sm btn-outline-danger"
-                                  onClick={() => cancelarCotizacion(c.id)}
+                                  onClick={() => cancelarCotizacion(c.id, c.estado)}
                                 >
                                   Cancelar
                                 </button>
@@ -200,7 +226,7 @@ export default function CotizacionesEmpresa() {
 
       {/* MODAL RESPONDER */}
       <div className="modal fade" id="modalResponder" tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">Responder cotización</h5>
@@ -214,8 +240,37 @@ export default function CotizacionesEmpresa() {
             <div className="modal-body">
               {cotizacionActiva && (
                 <>
-                  <p><strong>Producto:</strong> {cotizacionActiva.producto.nombre}</p>
-                  <p><strong>Precio unitario:</strong> ${cotizacionActiva.precio_unitario}</p>
+                  <div className="mb-2">
+                    <span className="badge bg-primary me-2">Solicitante</span>
+                    {cotizacionActiva.solicitante}
+                  </div>
+                  {cotizacionActiva.correo && (
+                    <div className="mb-2">
+                      <span className="badge bg-info me-2">Correo</span>
+                      {cotizacionActiva.correo}
+                    </div>
+                  )}
+                  {cotizacionActiva.telefono && (
+                    <div className="mb-2">
+                      <span className="badge bg-warning text-dark me-2">Teléfono</span>
+                      {cotizacionActiva.telefono}
+                    </div>
+                  )}
+
+                  <div className="mb-2">
+                    <span className="badge bg-success me-2">Producto</span>
+                    {cotizacionActiva.producto.nombre}
+                  </div>
+
+                  <div className="mb-2">
+                    <span className="badge bg-secondary me-2">Mensaje del cliente</span>
+                    {cotizacionActiva.mensaje}
+                  </div>
+
+                  <div className="mb-3">
+                    <span className="badge bg-dark me-2">Precio unitario</span>
+                    ${cotizacionActiva.precio_unitario}
+                  </div>
 
                   <div className="mb-3">
                     <label className="form-label">Cantidad</label>
@@ -228,9 +283,9 @@ export default function CotizacionesEmpresa() {
                     />
                   </div>
 
-                  <p><strong>Subtotal:</strong> ${cotizacionActiva.subtotal}</p>
-                  <p><strong>IVA (19%):</strong> ${cotizacionActiva.iva}</p>
-                  <p><strong>Total:</strong> ${cotizacionActiva.total}</p>
+                  <p><strong>Subtotal:</strong> ${cantidad * cotizacionActiva.precio_unitario}</p>
+                  <p><strong>IVA (19%):</strong> ${Math.round(cantidad * cotizacionActiva.precio_unitario * 0.19)}</p>
+                  <p><strong>Total:</strong> ${Math.round(cantidad * cotizacionActiva.precio_unitario * 1.19)}</p>
 
                   <textarea
                     className="form-control mt-3"
@@ -255,6 +310,23 @@ export default function CotizacionesEmpresa() {
           </div>
         </div>
       </div>
+
+      {/* TOAST */}
+      {showToast && (
+        <div
+          className={`toast align-items-center text-bg-${tipoToast} border-0 position-fixed bottom-0 end-0 m-3 show`}
+          role="alert"
+        >
+          <div className="d-flex">
+            <div className="toast-body">{mensajeToast}</div>
+            <button
+              type="button"
+              className="btn-close btn-close-white me-2 m-auto"
+              onClick={() => setShowToast(false)}
+            ></button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
