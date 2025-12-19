@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-
+ // ------------------------
+  // Nuevo y funcionales
+  // ------------------------
 export default function MisCotizaciones() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);

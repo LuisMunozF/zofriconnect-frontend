@@ -1,3 +1,6 @@
+ // ------------------------
+  // Nuevo y funcionales
+  // ------------------------
 // ... (imports existentes)
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // NUEVO: importar useNavigate
