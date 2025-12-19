@@ -1,3 +1,4 @@
+// ... (imports previos se mantienen igual)
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import api from "../api/axios";
@@ -7,14 +8,17 @@ export default function Empresa() {
   const [misProductos, setMisProductos] = useState([]);
   const [miEmpresa, setMiEmpresa] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const { register, handleSubmit, reset } = useForm();
 
-  // NUEVO: usuario y flag para saber cuándo ya revisamos localStorage
+  // Estados para usuario y verificación de sesión
   const [usuario, setUsuario] = useState(null);
   const [revisado, setRevisado] = useState(false);
+  
+  // NUEVO: Estado para almacenar la lista de categorías
+  const [categorias, setCategorias] = useState([]);
+  const [cargandoCategorias, setCargandoCategorias] = useState(false);
 
-  // Leer usuario desde localStorage (rol, nombre, etc.)
+  // Leer usuario desde localStorage
   useEffect(() => {
     const stored = localStorage.getItem("usuario");
     if (stored) {
@@ -28,6 +32,49 @@ export default function Empresa() {
     setRevisado(true);
   }, []);
 
+  // NUEVO: Cargar categorías desde el endpoint correcto de tu API
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        setCargandoCategorias(true);
+        // IMPORTANTE: Cambia esta URL por tu endpoint real de categorías
+        // Probablemente sea una de estas opciones:
+        // 1. "/categorias/"
+        // 2. "/api/categorias/"
+        // 3. "/core/categorias/"
+        const response = await api.get("/categorias/");
+        
+        // Verifica la estructura de la respuesta en la consola
+        console.log("Respuesta de categorías:", response.data);
+        
+        // Dependiendo de cómo esté estructurada tu API:
+        // Si response.data es un array directamente:
+        if (Array.isArray(response.data)) {
+          setCategorias(response.data);
+        } 
+        // Si response.data tiene una propiedad results (paginación):
+        else if (response.data.results && Array.isArray(response.data.results)) {
+          setCategorias(response.data.results);
+        }
+        // Si es otro formato:
+        else {
+          console.warn("Formato de categorías no reconocido:", response.data);
+          setCategorias([]);
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+        // No muestres alerta aquí para no interrumpir el flujo
+        setCategorias([]);
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+    
+    if (usuario && usuario.rol === "EMPRESA") {
+      cargarCategorias();
+    }
+  }, [usuario]);
+
   const cargar = async () => {
     try {
       setLoading(true);
@@ -36,43 +83,51 @@ export default function Empresa() {
 
       if (emp.data) {
         const r = await api.get(`/productos/?empresa=${emp.data.id}`);
-        setMisProductos(r.data.results || r.data); // soporta paginación o lista simple
+        setMisProductos(r.data.results || r.data);
       }
     } catch (error) {
       console.error(error);
-      Swal.fire(
-        "Error",
-        "No se pudieron cargar los datos de tu empresa.",
-        "error"
-      );
+      Swal.fire("Error", "No se pudieron cargar los datos de tu empresa.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const onCrear = async (data) => {
-  try {
-    const payload = { ...data };
+    try {
+      const payload = { ...data };
 
-    // Si categoría llega vacía (""), la quitamos del payload
-    if (!payload.categoria) {
-      delete payload.categoria;
+      // Si categoría llega vacía (""), la quitamos del payload
+      if (!payload.categoria) {
+        delete payload.categoria;
+      }
+
+      // Si descripción llega vacía, la quitamos del payload
+      if (!payload.descripcion) {
+        delete payload.descripcion;
+      }
+
+      await api.post("/productos/", payload);
+      await cargar();
+      reset({ 
+        nombre: "", 
+        precio: "", 
+        categoria: "", 
+        imagen_url: "", 
+        descripcion: "" // NUEVO: resetear descripción también
+      });
+      Swal.fire("OK", "Producto creado", "success");
+    } catch (e) {
+      console.error("Error al crear producto:", e?.response?.data || e);
+      const detalle =
+        e?.response?.data?.detail ||
+        e?.response?.data?.empresa?.[0] ||
+        e?.response?.data?.categoria?.[0] ||
+        e?.response?.data?.descripcion?.[0] || // NUEVO: manejo de error para descripción
+        "No se pudo crear el producto";
+      Swal.fire("Error", detalle, "error");
     }
-
-    await api.post("/productos/", payload);
-    await cargar();
-    reset({ nombre: "", precio: "", categoria: "", imagen_url: "" });
-    Swal.fire("OK", "Producto creado", "success");
-  } catch (e) {
-    console.error("Error al crear producto:", e?.response?.data || e);
-    const detalle =
-      e?.response?.data?.detail ||
-      e?.response?.data?.empresa?.[0] ||
-      e?.response?.data?.categoria?.[0] ||
-      "No se pudo crear el producto";
-    Swal.fire("Error", detalle, "error");
-  }
-};
+  };
 
   const onEliminar = async (id) => {
     const confirmacion = window.confirm("¿Eliminar producto?");
@@ -87,7 +142,7 @@ export default function Empresa() {
     }
   };
 
-  // NUEVO: cargar datos SOLO si el usuario es EMPRESA
+  // Cargar datos SOLO si el usuario es EMPRESA
   useEffect(() => {
     if (usuario && usuario.rol === "EMPRESA") {
       cargar();
@@ -95,8 +150,7 @@ export default function Empresa() {
   }, [usuario]);
 
   // ---------- VISTAS SEGÚN SESIÓN / ROL ----------
-
-  // Aún revisando localStorage
+  // (Todo este bloque se mantiene IDÉNTICO)
   if (!revisado) {
     return (
       <main className="bg-light min-vh-100">
@@ -108,7 +162,6 @@ export default function Empresa() {
     );
   }
 
-  // Sin usuario logueado
   if (!usuario) {
     return (
       <main className="bg-light min-vh-100">
@@ -131,7 +184,6 @@ export default function Empresa() {
     );
   }
 
-  // Usuario logueado pero con rol distinto de EMPRESA
   if (usuario.rol !== "EMPRESA") {
     return (
       <main className="bg-light min-vh-100">
@@ -152,7 +204,6 @@ export default function Empresa() {
     );
   }
 
-  // Usuario EMPRESA pero sin empresa vinculada en el backend
   if (!loading && !miEmpresa) {
     return (
       <main className="bg-light min-vh-100">
@@ -174,7 +225,6 @@ export default function Empresa() {
     );
   }
 
-  // 🔴 Usuario EMPRESA con empresa vinculada pero NO aprobada
   if (!loading && miEmpresa && miEmpresa.aprobada === false) {
     return (
       <main className="bg-light min-vh-100">
@@ -198,12 +248,11 @@ export default function Empresa() {
     );
   }
 
-  // ---------- VISTA NORMAL DEL PANEL (EMPRESA + EMPRESA VINCULADA Y APROBADA) ----------
-
+  // ---------- VISTA NORMAL DEL PANEL ----------
   return (
     <main className="bg-light min-vh-100">
       <div className="container py-5">
-        {/* HEADER PANEL */}
+        {/* HEADER PANEL (se mantiene igual) */}
         <header className="mb-4">
           <span className="badge bg-primary-subtle text-primary mb-2">
             Panel de empresa usuaria
@@ -218,7 +267,7 @@ export default function Empresa() {
           </p>
         </header>
 
-        {/* INFO EMPRESA + STATS */}
+        {/* INFO EMPRESA + STATS (se mantiene igual) */}
         {miEmpresa && (
           <section className="row g-3 mb-4">
             <div className="col-md-7">
@@ -275,7 +324,7 @@ export default function Empresa() {
           </section>
         )}
 
-        {/* LOADING */}
+        {/* LOADING (se mantiene igual) */}
         {loading && (
           <div className="text-center py-5">
             <div className="spinner-border text-primary mb-3" role="status" />
@@ -285,7 +334,7 @@ export default function Empresa() {
 
         {!loading && (
           <section className="row g-4">
-            {/* FORM CREAR PRODUCTO */}
+            {/* FORM CREAR PRODUCTO - CON DESCRIPCIÓN AÑADIDA */}
             <div className="col-lg-5">
               <div className="card border-0 shadow-sm rounded-4 h-100">
                 <div className="card-body">
@@ -322,18 +371,48 @@ export default function Empresa() {
                       />
                     </div>
 
+                    {/* NUEVO: CAMPO DE DESCRIPCIÓN */}
                     <div>
                       <label className="form-label small fw-semibold">
-                        ID categoría (opcional)
+                        Descripción del producto (opcional)
                       </label>
-                      <input
+                      <textarea
                         className="form-control"
-                        placeholder="Ej: 1 (Electrónica)"
-                        {...register("categoria")}
+                        placeholder="Ej: Lote de 50 unidades de celulares Samsung Galaxy A54, desbloqueados, nuevos en caja, color negro y blanco, garantía 12 meses..."
+                        rows="4"
+                        {...register("descripcion")}
                       />
                       <div className="form-text small">
-                        En el prototipo se usa el ID de la categoría ya registrada
-                        en el backend.
+                        Describe las características, condiciones, especificaciones técnicas
+                        o cualquier detalle relevante para los compradores B2B.
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="form-label small fw-semibold">
+                        Categoría (opcional)
+                      </label>
+                      {/* Select con loading */}
+                      <select
+                        className="form-select"
+                        {...register("categoria")}
+                        disabled={cargandoCategorias}
+                      >
+                        <option value="">Selecciona una categoría</option>
+                        {cargandoCategorias ? (
+                          <option value="" disabled>Cargando categorías...</option>
+                        ) : (
+                          categorias.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {/* Ajusta según los campos de tu modelo: cat.nombre, cat.name, etc. */}
+                              {cat.nombre || cat.name || `Categoría ${cat.id}`}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <div className="form-text small">
+                        Selecciona una categoría existente del sistema.
+                        {cargandoCategorias && " (Cargando...)"}
                       </div>
                     </div>
 
@@ -360,7 +439,7 @@ export default function Empresa() {
               </div>
             </div>
 
-            {/* LISTADO DE PRODUCTOS */}
+            {/* LISTADO DE PRODUCTOS - CON DESCRIPCIÓN AÑADIDA */}
             <div className="col-lg-7">
               <div className="card border-0 shadow-sm rounded-4 h-100">
                 <div className="card-body d-flex flex-column">
@@ -393,6 +472,19 @@ export default function Empresa() {
                               <p className="mb-2 text-primary fw-semibold small">
                                 ${p.precio}
                               </p>
+                              {/* NUEVO: Mostrar descripción si existe */}
+                              {p.descripcion && (
+                                <div className="mb-2">
+                                  <p className="small text-muted mb-0">
+                                    <strong>Descripción:</strong> 
+                                  </p>
+                                  <p className="small text-muted mb-2">
+                                    {p.descripcion.length > 100 
+                                      ? `${p.descripcion.substring(0, 100)}...` 
+                                      : p.descripcion}
+                                  </p>
+                                </div>
+                              )}
                               <p className="small text-muted flex-grow-1 mb-2">
                                 ID producto: {p.id}
                               </p>

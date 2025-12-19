@@ -1,13 +1,16 @@
+// ... (imports existentes)
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // NUEVO: importar useNavigate
 import api from "../api/axios";
 
 export default function Catalogo() {
+  const navigate = useNavigate(); // NUEVO: hook para navegación
+  
+  // ... (todos tus estados se mantienen igual)
   const [items, setItems] = useState([]);
   const [err, setErr] = useState("");
-
   const [usuario, setUsuario] = useState(null);
   const [miEmpresa, setMiEmpresa] = useState(null);
-
   const [showForm, setShowForm] = useState(false);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -17,8 +20,7 @@ export default function Catalogo() {
   const [categorias, setCategorias] = useState([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState("");
   const [selectedCategoria, setSelectedCategoria] = useState("");
-
-  // NUEVO: estado del modal de cotización
+  
   const [modalCotizacion, setModalCotizacion] = useState({
     abierto: false,
     producto: null,
@@ -28,6 +30,7 @@ export default function Catalogo() {
     enviando: false,
   });
 
+  // ... (todos tus useEffects se mantienen igual)
   useEffect(() => {
     const stored = localStorage.getItem("usuario");
     if (stored) {
@@ -210,6 +213,11 @@ export default function Catalogo() {
     }
   };
 
+  // NUEVO: Función para redirigir a /empresa
+  const irAPanelEmpresa = () => {
+    navigate("/empresa");
+  };
+
   const esEmpresa = usuario && usuario.rol === "EMPRESA";
   const empresaAprobada = miEmpresa && miEmpresa.aprobada === true;
   const empresaPendiente = miEmpresa && miEmpresa.aprobada === false;
@@ -228,7 +236,7 @@ export default function Catalogo() {
           </p>
         </header>
 
-        {/* Botón Crear producto */}
+        {/* Botón Crear producto - MODIFICADO */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0 text-secondary">
             Productos registrados:{" "}
@@ -240,9 +248,9 @@ export default function Catalogo() {
           {esEmpresa && empresaAprobada && (
             <button
               className="btn btn-success"
-              onClick={() => setShowForm(!showForm)}
+              onClick={irAPanelEmpresa} // CAMBIADO: ahora usa la función de navegación
             >
-              {showForm ? "Cerrar formulario" : "Crear producto"}
+              Crear producto
             </button>
           )}
         </div>
@@ -271,90 +279,8 @@ export default function Catalogo() {
           </div>
         )}
 
-        {/* FORMULARIO CREACIÓN PRODUCTO */}
-        {esEmpresa && empresaAprobada && showForm && (
-          <div className="card border-0 shadow-sm p-3 mb-4">
-            <h4 className="fw-bold text-primary mb-3">Nuevo producto</h4>
-            <form onSubmit={crearProducto} className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label fw-semibold small">Empresa usuaria</label>
-                <select
-                  className="form-control"
-                  value={selectedEmpresa}
-                  onChange={(e) => setSelectedEmpresa(e.target.value)}
-                  required
-                >
-                  <option value="">Seleccionar Empresa</option>
-                  {empresas.map((empresa) => (
-                    <option key={empresa.id} value={empresa.id}>
-                      {empresa.nombre || empresa.nombre_fantasia}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold small">Categoría / rubro</label>
-                <select
-                  className="form-control"
-                  value={selectedCategoria}
-                  onChange={(e) => setSelectedCategoria(e.target.value)}
-                  required
-                >
-                  <option value="">Seleccionar Categoría</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria.id} value={categoria.id}>
-                      {categoria.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold small">Nombre</label>
-                <input
-                  className="form-control"
-                  placeholder="Ej: Lote de notebooks 14''"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold small">Precio referencial mayorista</label>
-                <input
-                  className="form-control"
-                  type="number"
-                  placeholder="Ej: 150000"
-                  value={precio}
-                  onChange={(e) => setPrecio(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="col-12">
-                <label className="form-label fw-semibold small">Descripción</label>
-                <textarea
-                  className="form-control"
-                  rows="2"
-                  placeholder="Detalle del producto"
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold small">Imagen</label>
-                <input
-                  className="form-control"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImagen(e.target.files[0])}
-                />
-              </div>
-              <div className="col-12 text-end">
-                <button className="btn btn-primary" type="submit">Guardar producto</button>
-              </div>
-            </form>
-          </div>
-        )}
+        {/* FORMULARIO CREACIÓN PRODUCTO - ELIMINADO porque ya no se muestra aquí */}
+        {/* Este formulario completo ha sido eliminado ya que ahora se redirige a /empresa */}
 
         {err && <div className="alert alert-danger">{err}</div>}
 
