@@ -1,5 +1,5 @@
  // ------------------------
-  // Nuevo y funcional
+  // Nuevo y funcionales
   // ------------------------
 // ... (imports previos se mantienen igual)
 import { useEffect, useState } from "react";

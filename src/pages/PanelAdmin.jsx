@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
-// ------------------------
-// Nuevo y funcional
-// ------------------------
+ // ------------------------
+  // Nuevo y funcionales
+  // ------------------------
 
 export default function PanelAdmin() {
   const [usuario, setUsuario] = useState(null);

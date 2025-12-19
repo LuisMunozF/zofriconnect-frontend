@@ -1,5 +1,5 @@
  // ------------------------
-  // Nuevo y funcional
+  // Nuevo y funcionales
   // ------------------------
 import { useEffect, useState } from "react";
 import api from "../api/axios";

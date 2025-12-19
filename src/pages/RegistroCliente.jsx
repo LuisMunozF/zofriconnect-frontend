@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 
-// ------------------------
-// Nuevo y funcional
-// ------------------------
+ // ------------------------
+  // Nuevo y funcionales
+  // ------------------------
 export default function RegistroCliente() {
   const [formData, setFormData] = useState({
     nombre: "",
