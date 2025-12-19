@@ -1,6 +1,8 @@
 import api from "../api/axios";
 import { useEffect, useState } from "react";
-
+// ------------------------
+// Nuevo y funcional
+// ------------------------
 export default function Conexion() {
   const [status, setStatus] = useState({
     ok: false,

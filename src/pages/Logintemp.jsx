@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
-
+// ------------------------
+// Nuevo y funcional
+// ------------------------
 export default function Login() {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");

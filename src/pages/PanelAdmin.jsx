@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
+// ------------------------
+// Nuevo y funcional
+// ------------------------
+
 export default function PanelAdmin() {
   const [usuario, setUsuario] = useState(null);
   const [empresas, setEmpresas] = useState([]);

@@ -1,7 +1,9 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-
+// ------------------------
+// Nuevo y funcional
+// ------------------------
 export default function Mapa() {
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);

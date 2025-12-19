@@ -5,7 +5,9 @@ import Beneficios from '../components/Beneficios';
 import Categorias from '../components/CategoriasCentral';
 import Footer from '../components/Footer';
 import ProductCarousel from '../components/CarouselProductos';
-
+// ------------------------
+// Nuevo y funcional
+// ------------------------
 export default function Home() {
   return (
     <main className="bg-light">

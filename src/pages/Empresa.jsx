@@ -1,3 +1,6 @@
+ // ------------------------
+  // Nuevo y funcional
+  // ------------------------
 // ... (imports previos se mantienen igual)
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
